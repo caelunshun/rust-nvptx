@@ -29,6 +29,25 @@ pub(crate) struct MixedExportNameAndNoMangle {
 }
 
 #[derive(Diagnostic)]
+#[diag("`#[nvptx]` is only supported on nvptx targets")]
+pub(crate) struct NvptxAttrWrongTarget {
+    #[primary_span]
+    pub attr_span: Span,
+}
+
+#[derive(Diagnostic)]
+#[diag(
+    "`#[nvptx]` can only be applied to `extern \"gpu-kernel\"` or `extern \"ptx-kernel\"` functions"
+)]
+pub(crate) struct NvptxAttrNotKernel {
+    #[primary_span]
+    pub attr_span: Span,
+    #[label("function has `extern \"{$abi}\"` ABI")]
+    pub sig_span: Span,
+    pub abi: &'static str,
+}
+
+#[derive(Diagnostic)]
 #[diag("`#[doc(alias = \"...\")]` isn't allowed on {$location}")]
 pub(crate) struct DocAliasBadLocation<'a> {
     #[primary_span]

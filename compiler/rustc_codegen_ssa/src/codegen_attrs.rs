@@ -293,6 +293,7 @@ fn process_builtin_attrs(
             AttributeKind::InstrumentFn(instrument_fn) => {
                 codegen_fn_attrs.instrument_fn = Some(*instrument_fn);
             }
+            AttributeKind::Nvptx(nvptx, _) => codegen_fn_attrs.nvptx = Some(*nvptx),
             _ => {}
         }
     }

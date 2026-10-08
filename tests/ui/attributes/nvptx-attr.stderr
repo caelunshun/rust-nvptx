@@ -1,0 +1,212 @@
+error: the `nvptx` attribute cannot be used on structs
+  --> $DIR/nvptx-attr.rs:31:3
+   |
+LL | #[nvptx(max_registers(32))]
+   |   ^^^^^
+   |
+   = help: the `nvptx` attribute can only be applied to functions
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:34:3
+   |
+LL | #[nvptx]
+   |   ^^^^^ expected this to be a list
+   |
+help: must be of the form
+   |
+LL | #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |        +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:37:3
+   |
+LL | #[nvptx()]
+   |   ^^^^^--
+   |        |
+   |        expected at least 1 argument here
+   |
+help: must be of the form
+   |
+LL | #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |         +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:40:3
+   |
+LL | #[nvptx(max_registers(0))]
+   |   ^^^^^^^^^^^^^^^^^^^^-^^
+   |                       |
+   |                       expected an integer literal in the range of 1..=4294967295
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers(0))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:43:3
+   |
+LL | #[nvptx(max_registers("32"))]
+   |   ^^^^^^^^^^^^^^^^^^^^----^^
+   |                       |
+   |                       expected an integer literal in the range of 1..=4294967295
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers("32"))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:46:3
+   |
+LL | #[nvptx(max_registers)]
+   |   ^^^^^^-------------^
+   |         |
+   |         expected this to be a list
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers)]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:49:3
+   |
+LL | #[nvptx(max_registers = 32)]
+   |   ^^^^^^^^^^^^^^^^^^^^----^
+   |                       |
+   |                       expected this to be a list
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers = 32)]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0805]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:52:3
+   |
+LL | #[nvptx(max_registers(32, 64))]
+   |   ^^^^^^^^^^^^^^^^^^^--------^
+   |                      |
+   |                      expected a single argument here
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers(32, 64))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:55:3
+   |
+LL | #[nvptx(max_threads_per_cta = 256)]
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^-----^
+   |                             |
+   |                             expected this to be a list
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_threads_per_cta = 256)]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error: expected exactly 3 dimensions, found 2
+  --> $DIR/nvptx-attr.rs:58:28
+   |
+LL | #[nvptx(max_threads_per_cta(256, 1))]
+   |                            ^^^^^^^^
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:61:3
+   |
+LL | #[nvptx(exact_cluster_dim(1, 0, 1))]
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^-^^^^^
+   |                              |
+   |                              expected an integer literal in the range of 1..=4294967295
+   |
+help: must be of the form
+   |
+LL - #[nvptx(exact_cluster_dim(1, 0, 1))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0538]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:64:3
+   |
+LL | #[nvptx(max_registers(32), max_registers(64))]
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^-------------^^^^^
+   |                            |
+   |                            found `max_registers` used as a key more than once
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_registers(32), max_registers(64))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-attr.rs:67:3
+   |
+LL | #[nvptx(max_blocks(32))]
+   |   ^^^^^^----------^^^^^
+   |         |
+   |         valid arguments are `max_ctas_per_cluster`, `min_ctas_per_sm`, `max_registers`, `max_threads_per_cta`, `exact_threads_per_cta` or `exact_cluster_dim`
+   |
+help: must be of the form
+   |
+LL - #[nvptx(max_blocks(32))]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error: `max_threads_per_cta` and `exact_threads_per_cta` cannot both be specified
+  --> $DIR/nvptx-attr.rs:70:9
+   |
+LL | #[nvptx(max_threads_per_cta(256, 1, 1), exact_threads_per_cta(256, 1, 1))]
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  -------------------------------- also specified here
+
+error: `max_ctas_per_cluster` and `exact_cluster_dim` cannot both be specified
+  --> $DIR/nvptx-attr.rs:74:37
+   |
+LL | #[nvptx(exact_cluster_dim(2, 1, 1), max_ctas_per_cluster(2))]
+   |         --------------------------  ^^^^^^^^^^^^^^^^^^^^^^^
+   |         |
+   |         also specified here
+
+error: multiple `nvptx` attributes
+  --> $DIR/nvptx-attr.rs:79:1
+   |
+LL | #[nvptx(max_registers(64))]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: remove this attribute
+   |
+note: attribute also specified here
+  --> $DIR/nvptx-attr.rs:78:1
+   |
+LL | #[nvptx(max_registers(32))]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: `#[nvptx]` can only be applied to `extern "gpu-kernel"` or `extern "ptx-kernel"` functions
+  --> $DIR/nvptx-attr.rs:23:1
+   |
+LL | #[nvptx(max_registers(32))]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |
+LL | fn rust_abi() {}
+   | ------------- function has `extern "Rust"` ABI
+
+error: `#[nvptx]` can only be applied to `extern "gpu-kernel"` or `extern "ptx-kernel"` functions
+  --> $DIR/nvptx-attr.rs:27:1
+   |
+LL | #[nvptx(max_registers(32))]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL |
+LL | extern "C" fn c_abi() {}
+   | --------------------- function has `extern "C"` ABI
+
+error: aborting due to 18 previous errors
+
+Some errors have detailed explanations: E0538, E0539, E0805.
+For more information about an error, try `rustc --explain E0538`.

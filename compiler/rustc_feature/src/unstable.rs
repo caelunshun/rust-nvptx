@@ -677,6 +677,10 @@ declare_features! (
     (unstable, non_exhaustive_omitted_patterns_lint, "1.57.0", Some(89554)),
     /// Allows `for<T>` binders in where-clauses
     (incomplete, non_lifetime_binders, "1.69.0", Some(108185)),
+    // no-tracking-issue-start
+    /// Allows the `#[nvptx(...)]` kernel attribute.
+    (unstable, nvptx_ext, "CURRENT_RUSTC_VERSION", None),
+    // no-tracking-issue-end
     /// Target features on nvptx.
     (unstable, nvptx_target_feature, "1.91.0", Some(150254)),
     /// Allows using enums in offset_of!

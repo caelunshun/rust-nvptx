@@ -1,0 +1,8 @@
+error: `#[nvptx]` is only supported on nvptx targets
+  --> $DIR/nvptx-attr-wrong-target.rs:12:1
+   |
+LL | #[nvptx(max_registers(32))]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error
+

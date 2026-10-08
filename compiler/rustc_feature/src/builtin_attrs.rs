@@ -233,6 +233,9 @@ pub static BUILTIN_ATTRIBUTES: &[Symbol] = &[
     // - https://github.com/rust-lang/rust/issues/157081
     sym::instrument_fn,
 
+    // `#[nvptx(...)]` kernel launch bounds and cluster configuration.
+    sym::nvptx,
+
     // ==========================================================================
     // Internal attributes: Stability, deprecation, and unsafe:
     // ==========================================================================

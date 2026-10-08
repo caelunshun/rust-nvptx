@@ -1305,6 +1305,25 @@ pub(crate) struct EmptyExportName {
 }
 
 #[derive(Diagnostic)]
+#[diag("`{$first}` and `{$second}` cannot both be specified")]
+pub(crate) struct NvptxConflictingKeys {
+    #[primary_span]
+    pub first_span: Span,
+    #[label("also specified here")]
+    pub second_span: Span,
+    pub first: Symbol,
+    pub second: Symbol,
+}
+
+#[derive(Diagnostic)]
+#[diag("expected exactly 3 dimensions, found {$found}")]
+pub(crate) struct NvptxExpectedThreeDims {
+    #[primary_span]
+    pub span: Span,
+    pub found: usize,
+}
+
+#[derive(Diagnostic)]
 #[diag("`section` may not be empty")]
 pub(crate) struct EmptySection {
     #[primary_span]

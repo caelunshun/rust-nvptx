@@ -51,6 +51,7 @@ use crate::attributes::must_use::*;
 use crate::attributes::no_implicit_prelude::*;
 use crate::attributes::no_link::*;
 use crate::attributes::non_exhaustive::*;
+use crate::attributes::nvptx::*;
 use crate::attributes::path::PathParser as PathAttributeParser;
 use crate::attributes::pin_v2::*;
 use crate::attributes::proc_macro_attrs::*;
@@ -223,6 +224,7 @@ attribute_parsers!(
         Single<MoveSizeLimitParser>,
         Single<MustNotSuspendParser>,
         Single<MustUseParser>,
+        Single<NvptxParser>,
         Single<OptimizeParser>,
         Single<PatchableFunctionEntryParser>,
         Single<PathAttributeParser>,

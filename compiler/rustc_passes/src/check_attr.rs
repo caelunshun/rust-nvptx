@@ -8,6 +8,7 @@
 use std::cell::Cell;
 use std::slice;
 
+use rustc_abi::ExternAbi;
 use rustc_ast::MetaItemKind;
 use rustc_attr_ir::diagnostic::Directive;
 use rustc_attr_ir::lang_items::LangItem;
@@ -42,6 +43,7 @@ use rustc_session::diagnostics::feature_err;
 use rustc_span::edition::Edition;
 use rustc_span::{DUMMY_SP, Ident, Span, Symbol, bug, kw, span_bug, sym};
 use rustc_structures::CrateType;
+use rustc_target::spec::Arch;
 use rustc_trait_selection::error_reporting::InferCtxtErrorExt;
 use rustc_trait_selection::infer::{TyCtxtInferExt, ValuePairs};
 use rustc_trait_selection::traits::{ObligationCtxt, TraitErrors};
@@ -202,6 +204,7 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
                 self.check_rustc_allow_const_fn_unstable(hir_id, *first_span, span, target)
             }
             AttributeKind::Naked(..) => self.check_naked(hir_id, target),
+            AttributeKind::Nvptx(_, attr_span) => self.check_nvptx(hir_id, *attr_span, target),
             AttributeKind::MayDangle(attr_span) => self.check_may_dangle(hir_id, *attr_span),
             AttributeKind::Doc(attr) => self.check_doc_attrs(attr, hir_id, target),
             AttributeKind::EiiImpl(eii_impl) => self.check_eii_impl(eii_impl),
@@ -755,6 +758,24 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
                 }
             }
             _ => {}
+        }
+    }
+
+    /// Checks that `#[nvptx(...)]` is applied to a kernel function on an nvptx target.
+    fn check_nvptx(&self, hir_id: HirId, attr_span: Span, target: Target) {
+        if self.tcx.sess.target.arch != Arch::Nvptx64 {
+            self.dcx().emit_err(diagnostics::NvptxAttrWrongTarget { attr_span });
+        }
+        if let Target::Fn = target {
+            let fn_sig = self.tcx.hir_node(hir_id).fn_sig().unwrap();
+            let abi = fn_sig.header.abi;
+            if !matches!(abi, ExternAbi::GpuKernel | ExternAbi::PtxKernel) {
+                self.dcx().emit_err(diagnostics::NvptxAttrNotKernel {
+                    attr_span,
+                    sig_span: fn_sig.span,
+                    abi: abi.as_str(),
+                });
+            }
         }
     }
 

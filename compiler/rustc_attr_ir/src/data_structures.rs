@@ -133,6 +133,24 @@ pub enum OptimizeAttr {
     Size,
 }
 
+/// Kernel launch bounds and cluster configuration from `#[nvptx(...)]`.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PrintAttribute)]
+#[derive(Encodable, Decodable, StableHash)]
+pub struct NvptxAttr {
+    /// `nvvm.maxclusterrank`
+    pub max_ctas_per_cluster: Option<u32>,
+    /// `nvvm.minctasm`
+    pub min_ctas_per_sm: Option<u32>,
+    /// `nvvm.maxnreg`
+    pub max_registers: Option<u32>,
+    /// `nvvm.maxntid`
+    pub max_threads_per_cta: Option<(u32, u32, u32)>,
+    /// `nvvm.reqntid`
+    pub exact_threads_per_cta: Option<(u32, u32, u32)>,
+    /// `nvvm.cluster_dim`
+    pub exact_cluster_dim: Option<(u32, u32, u32)>,
+}
+
 impl OptimizeAttr {
     pub fn do_not_optimize(&self) -> bool {
         matches!(self, Self::DoNotOptimize)
@@ -1005,6 +1023,9 @@ pub enum AttributeKind {
 
     /// Represents `#[non_exhaustive]`
     NonExhaustive(Span),
+
+    /// Represents `#[nvptx(...)]`
+    Nvptx(NvptxAttr, Span),
 
     /// Represents `#[diagnostic::on_const]`.
     OnConst {

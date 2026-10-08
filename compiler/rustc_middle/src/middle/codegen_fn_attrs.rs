@@ -2,7 +2,8 @@ use std::borrow::Cow;
 
 use rustc_abi::Align;
 use rustc_attr_ir::{
-    InlineAttr, InstructionSetAttr, InstrumentFnAttr, Linkage, OptimizeAttr, RtsanSetting,
+    InlineAttr, InstructionSetAttr, InstrumentFnAttr, Linkage, NvptxAttr, OptimizeAttr,
+    RtsanSetting,
 };
 use rustc_hir::def_id::DefId;
 use rustc_macros::{StableHash, TyDecodable, TyEncodable};
@@ -124,6 +125,8 @@ pub struct CodegenFnAttrs {
     pub objc_selector: Option<Symbol>,
     /// The `#[instrument_fn]` attribute.
     pub instrument_fn: Option<InstrumentFnAttr>,
+    /// The `#[nvptx(...)]` attribute.
+    pub nvptx: Option<NvptxAttr>,
 }
 
 #[derive(Copy, Clone, Debug, TyEncodable, TyDecodable, StableHash, PartialEq, Eq)]
@@ -261,6 +264,7 @@ impl CodegenFnAttrs {
             objc_class: None,
             objc_selector: None,
             instrument_fn: None,
+            nvptx: None,
         }
     }
 

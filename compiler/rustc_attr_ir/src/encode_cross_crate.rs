@@ -78,6 +78,7 @@ impl AttributeKind {
             NoMangle(..) => Yes, // Needed for rustdoc
             NoStd => No,
             NonExhaustive(..) => Yes, // Needed for rustdoc
+            Nvptx(..) => Yes,
             OnConst { .. } => Yes,
             OnMove { .. } => Yes,
             OnTypeError { .. } => Yes,
@@ -292,6 +293,7 @@ impl AttributeKind {
             NoMangle(..) => true,
             NoStd => false,
             NonExhaustive(..) => false,
+            Nvptx(..) => false,
             OnConst { .. } => false,
             OnMove { .. } => false,
             OnTypeError { .. } => false,

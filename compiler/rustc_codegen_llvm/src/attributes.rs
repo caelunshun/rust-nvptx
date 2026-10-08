@@ -1,6 +1,7 @@
 //! Set and unset common attributes on LLVM values.
 use rustc_attr_ir::{
-    InlineAttr, InstructionSetAttr, InstrumentFnAttr, OptimizeAttr, RtsanSetting, find_attr,
+    InlineAttr, InstructionSetAttr, InstrumentFnAttr, NvptxAttr, OptimizeAttr, RtsanSetting,
+    find_attr,
 };
 use rustc_hir::def_id::DefId;
 use rustc_middle::middle::codegen_fn_attrs::{
@@ -80,6 +81,28 @@ pub(crate) fn inline_attr<'tcx, 'll>(
         }
         InlineAttr::None => None,
     }
+}
+
+fn nvptx_attrs<'ll>(cx: &SimpleCx<'ll>, attr: NvptxAttr) -> SmallVec<[&'ll Attribute; 6]> {
+    let scalars = [
+        ("nvvm.maxclusterrank", attr.max_ctas_per_cluster),
+        ("nvvm.minctasm", attr.min_ctas_per_sm),
+        ("nvvm.maxnreg", attr.max_registers),
+    ];
+    let dims = [
+        ("nvvm.maxntid", attr.max_threads_per_cta),
+        ("nvvm.reqntid", attr.exact_threads_per_cta),
+        ("nvvm.cluster_dim", attr.exact_cluster_dim),
+    ];
+    scalars
+        .into_iter()
+        .filter_map(|(name, val)| Some((name, val?.to_string())))
+        .chain(dims.into_iter().filter_map(|(name, val)| {
+            let (x, y, z) = val?;
+            Some((name, format!("{x},{y},{z}")))
+        }))
+        .map(|(name, val)| llvm::CreateAttrStringValue(cx.llcx, name, &val))
+        .collect()
 }
 
 #[inline]
@@ -658,6 +681,9 @@ pub(crate) fn llfn_attrs_from_instance<'ll, 'tcx>(
         sess,
         codegen_fn_attrs.patchable_function_entry,
     ));
+    if let Some(nvptx) = codegen_fn_attrs.nvptx {
+        to_add.extend(nvptx_attrs(cx, nvptx));
+    }
 
     // Always annotate functions with the target-cpu they are compiled for.
     // Without this, ThinLTO won't inline Rust functions into Clang generated
