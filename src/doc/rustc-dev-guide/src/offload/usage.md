@@ -26,9 +26,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 #[cfg(target_arch = "amdgpu")]
 use core::arch::amdgpu::{workgroup_id_x as block_idx_x, workitem_id_x as thread_idx_x};
 #[cfg(target_arch = "nvptx64")]
-use core::arch::nvptx::{
-    _block_dim_x as block_dim_x, _block_idx_x as block_idx_x, _thread_idx_x as thread_idx_x,
-};
+use core::arch::nvptx::{ctaid_x as block_idx_x, ntid_x as block_dim_x, tid_x as thread_idx_x};
 
 // Kernels can be generic, like any other Rust function.
 // The concrete instantiations required by the host code are collected in a

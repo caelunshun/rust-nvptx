@@ -644,17 +644,30 @@ const NVPTX_FEATURES: &[(&str, Stability, ImpliedFeatures)] = &[
     ("sm_80", Unstable(sym::nvptx_target_feature), &["sm_75"]),
     ("sm_86", Unstable(sym::nvptx_target_feature), &["sm_80"]),
     ("sm_87", Unstable(sym::nvptx_target_feature), &["sm_86"]),
-    ("sm_89", Unstable(sym::nvptx_target_feature), &["sm_87"]),
+    ("sm_88", Unstable(sym::nvptx_target_feature), &["sm_87"]),
+    ("sm_89", Unstable(sym::nvptx_target_feature), &["sm_88"]),
     ("sm_90", Unstable(sym::nvptx_target_feature), &["sm_89"]),
     ("sm_90a", Unstable(sym::nvptx_target_feature), &["sm_90"]),
     // tidy-alphabetical-end
     // tidy-alphabetical-start
     ("sm_100", Unstable(sym::nvptx_target_feature), &["sm_90"]),
-    ("sm_100a", Unstable(sym::nvptx_target_feature), &["sm_100"]),
+    ("sm_100a", Unstable(sym::nvptx_target_feature), &["sm_100f"]),
+    ("sm_100f", Unstable(sym::nvptx_target_feature), &["sm_100"]),
     ("sm_101", Unstable(sym::nvptx_target_feature), &["sm_100"]),
-    ("sm_101a", Unstable(sym::nvptx_target_feature), &["sm_101"]),
-    ("sm_120", Unstable(sym::nvptx_target_feature), &["sm_101"]),
-    ("sm_120a", Unstable(sym::nvptx_target_feature), &["sm_120"]),
+    ("sm_101a", Unstable(sym::nvptx_target_feature), &["sm_101f"]),
+    ("sm_101f", Unstable(sym::nvptx_target_feature), &["sm_101"]),
+    ("sm_103", Unstable(sym::nvptx_target_feature), &["sm_100"]),
+    ("sm_103a", Unstable(sym::nvptx_target_feature), &["sm_103f"]),
+    ("sm_103f", Unstable(sym::nvptx_target_feature), &["sm_103", "sm_100f"]),
+    ("sm_110", Unstable(sym::nvptx_target_feature), &["sm_101", "sm_103"]),
+    ("sm_110a", Unstable(sym::nvptx_target_feature), &["sm_110f"]),
+    ("sm_110f", Unstable(sym::nvptx_target_feature), &["sm_110"]),
+    ("sm_120", Unstable(sym::nvptx_target_feature), &["sm_110"]),
+    ("sm_120a", Unstable(sym::nvptx_target_feature), &["sm_120f"]),
+    ("sm_120f", Unstable(sym::nvptx_target_feature), &["sm_120"]),
+    ("sm_121", Unstable(sym::nvptx_target_feature), &["sm_120"]),
+    ("sm_121a", Unstable(sym::nvptx_target_feature), &["sm_121f"]),
+    ("sm_121f", Unstable(sym::nvptx_target_feature), &["sm_121", "sm_120f"]),
     // tidy-alphabetical-end
     // tidy-alphabetical-start
     ("ptx70", Unstable(sym::nvptx_target_feature), &[]),
@@ -674,6 +687,11 @@ const NVPTX_FEATURES: &[(&str, Stability, ImpliedFeatures)] = &[
     ("ptx85", Unstable(sym::nvptx_target_feature), &["ptx84"]),
     ("ptx86", Unstable(sym::nvptx_target_feature), &["ptx85"]),
     ("ptx87", Unstable(sym::nvptx_target_feature), &["ptx86"]),
+    ("ptx88", Unstable(sym::nvptx_target_feature), &["ptx87"]),
+    ("ptx90", Unstable(sym::nvptx_target_feature), &["ptx88"]),
+    ("ptx91", Unstable(sym::nvptx_target_feature), &["ptx90"]),
+    ("ptx92", Unstable(sym::nvptx_target_feature), &["ptx91"]),
+    ("ptx93", Unstable(sym::nvptx_target_feature), &["ptx92"]),
     // tidy-alphabetical-end
 ];
 

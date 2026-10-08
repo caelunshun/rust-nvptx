@@ -24,6 +24,7 @@
     powerpc_target_feature,
     loongarch_target_feature,
     hexagon_target_feature,
+    nvptx_target_feature,
     wasm_target_feature,
     rtm_target_feature,
     allow_internal_unstable,
