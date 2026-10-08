@@ -205,6 +205,9 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
             }
             AttributeKind::Naked(..) => self.check_naked(hir_id, target),
             AttributeKind::Nvptx(_, attr_span) => self.check_nvptx(hir_id, *attr_span, target),
+            AttributeKind::NvptxGridConstant(attr_span) => {
+                self.check_nvptx_grid_constant(hir_id, *attr_span)
+            }
             AttributeKind::RustcLlvmPtrAddrspace { args, ret, attr_span } => self
                 .check_rustc_llvm_ptr_addrspace(hir_id, args.as_deref(), *ret, *attr_span, target),
             AttributeKind::MayDangle(attr_span) => self.check_may_dangle(hir_id, *attr_span),
@@ -828,6 +831,58 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
             } else if !self.tcx.sess.target.addr_space_is_generic_castable(AddressSpace(addrspace))
             {
                 self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceNotCastable { span, addrspace });
+            }
+        }
+    }
+
+    /// Checks that `#[nvptx(grid_constant)]` is applied to a kernel parameter of type `&T`,
+    /// where `T: Copy + Freeze`.
+    fn check_nvptx_grid_constant(&self, hir_id: HirId, attr_span: Span) {
+        if self.tcx.sess.target.arch != Arch::Nvptx64 {
+            self.dcx().emit_err(diagnostics::NvptxAttrWrongTarget { attr_span });
+            return;
+        }
+        let hir::Node::Param(param) = self.tcx.hir_node(hir_id) else { return };
+        let parent = self.tcx.parent_hir_node(hir_id);
+        let (Some(fn_sig), Some((def_id, _))) = (parent.fn_sig(), parent.associated_body()) else {
+            self.dcx().emit_err(diagnostics::NvptxGridConstantNotKernel { attr_span });
+            return;
+        };
+        if !matches!(fn_sig.header.abi, ExternAbi::GpuKernel | ExternAbi::PtxKernel) {
+            self.dcx().emit_err(diagnostics::NvptxGridConstantNotKernel { attr_span });
+            return;
+        }
+
+        let Some(index) =
+            self.tcx.hir_body_owned_by(def_id).params.iter().position(|p| p.hir_id == hir_id)
+        else {
+            return;
+        };
+        let sig = self.tcx.instantiate_bound_regions_with_erased(
+            self.tcx.fn_sig(def_id).instantiate_identity().skip_norm_wip(),
+        );
+        let ty = sig.inputs()[index];
+        let ty::Ref(_, pointee, hir::Mutability::Not) = *ty.kind() else {
+            self.dcx().emit_err(diagnostics::NvptxGridConstantNotSharedRef {
+                attr_span,
+                ty_span: param.ty_span,
+                ty,
+            });
+            return;
+        };
+
+        let typing_env = ty::TypingEnv::non_body_analysis(self.tcx, def_id);
+        for (holds, trait_name) in [
+            (self.tcx.type_is_copy_modulo_regions(typing_env, pointee), "Copy"),
+            (pointee.is_freeze(self.tcx, typing_env), "Freeze"),
+        ] {
+            if !holds {
+                self.dcx().emit_err(diagnostics::NvptxGridConstantMissingTrait {
+                    attr_span,
+                    ty_span: param.ty_span,
+                    ty: pointee,
+                    trait_name,
+                });
             }
         }
     }

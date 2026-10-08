@@ -530,6 +530,7 @@ impl<'a> AstValidator<'a> {
                         sym::deny,
                         sym::expect,
                         sym::forbid,
+                        sym::nvptx,
                         sym::rustc_splat,
                         sym::warn,
                     ];

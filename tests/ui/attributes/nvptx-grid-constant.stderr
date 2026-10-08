@@ -1,0 +1,125 @@
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-grid-constant.rs:62:3
+   |
+LL | #[nvptx(grid_constant)]
+   |   ^^^^^^-------------^
+   |         |
+   |         valid arguments are `max_ctas_per_cluster`, `min_ctas_per_sm`, `max_registers`, `max_threads_per_cta`, `exact_threads_per_cta` or `exact_cluster_dim`
+   |
+help: try changing it to one of the following valid forms of the attribute
+   |
+LL - #[nvptx(grid_constant)]
+LL + #[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))]
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-grid-constant.rs:66:42
+   |
+LL | extern "ptx-kernel" fn fn_key_on_param(#[nvptx(max_registers(32))] p: &Params) {}
+   |                                          ^^^^^^-------------^^^^^
+   |                                                |
+   |                                                the only valid argument here is `grid_constant`
+   |
+help: try changing it to one of the following valid forms of the attribute
+   |
+LL - extern "ptx-kernel" fn fn_key_on_param(#[nvptx(max_registers(32))] p: &Params) {}
+LL + extern "ptx-kernel" fn fn_key_on_param(#[nvptx(grid_constant)] p: &Params) {}
+   |
+LL - extern "ptx-kernel" fn fn_key_on_param(#[nvptx(max_registers(32))] p: &Params) {}
+LL + extern "ptx-kernel" fn fn_key_on_param(#[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))] p: &Params) {}
+   |
+
+error[E0565]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-grid-constant.rs:69:45
+   |
+LL | extern "ptx-kernel" fn grid_constant_args(#[nvptx(grid_constant(1))] p: &Params) {}
+   |                                             ^^^^^^^^^^^^^^^^^^^---^
+   |                                                                |
+   |                                                                didn't expect any arguments here
+   |
+help: try changing it to one of the following valid forms of the attribute
+   |
+LL - extern "ptx-kernel" fn grid_constant_args(#[nvptx(grid_constant(1))] p: &Params) {}
+LL + extern "ptx-kernel" fn grid_constant_args(#[nvptx(grid_constant)] p: &Params) {}
+   |
+LL - extern "ptx-kernel" fn grid_constant_args(#[nvptx(grid_constant(1))] p: &Params) {}
+LL + extern "ptx-kernel" fn grid_constant_args(#[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))] p: &Params) {}
+   |
+
+error[E0539]: malformed `nvptx` attribute input
+  --> $DIR/nvptx-grid-constant.rs:72:31
+   |
+LL | extern "ptx-kernel" fn bare(#[nvptx] p: &Params) {}
+   |                               ^^^^^ expected this to be a list
+   |
+help: try changing it to one of the following valid forms of the attribute
+   |
+LL | extern "ptx-kernel" fn bare(#[nvptx(grid_constant)] p: &Params) {}
+   |                                    +++++++++++++++
+LL | extern "ptx-kernel" fn bare(#[nvptx(max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z))] p: &Params) {}
+   |                                    +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+error: `#[nvptx(grid_constant)]` parameters must point to a type implementing `Freeze`
+  --> $DIR/nvptx-grid-constant.rs:32:52
+   |
+LL | extern "ptx-kernel" fn not_freeze_generic<T: Copy>(#[nvptx(grid_constant)] p: &T) {}
+   |                                                    ^^^^^^^^^^^^^^^^^^^^^^^    -- `T` does not implement `Freeze`
+
+error: `#[nvptx(grid_constant)]` parameters must be shared references
+  --> $DIR/nvptx-grid-constant.rs:35:32
+   |
+LL | extern "ptx-kernel" fn mut_ref(#[nvptx(grid_constant)] p: &mut Params) {}
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^    ----------- `&mut Params` is not a shared reference
+
+error: `#[nvptx(grid_constant)]` parameters must be shared references
+  --> $DIR/nvptx-grid-constant.rs:38:33
+   |
+LL | extern "ptx-kernel" fn by_value(#[nvptx(grid_constant)] p: Params) {}
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^    ------ `Params` is not a shared reference
+
+error: `#[nvptx(grid_constant)]` parameters must be shared references
+  --> $DIR/nvptx-grid-constant.rs:41:32
+   |
+LL | extern "ptx-kernel" fn raw_ptr(#[nvptx(grid_constant)] p: *const Params) {}
+   |                                ^^^^^^^^^^^^^^^^^^^^^^^    ------------- `*const Params` is not a shared reference
+
+error: `#[nvptx(grid_constant)]` parameters must point to a type implementing `Copy`
+  --> $DIR/nvptx-grid-constant.rs:44:33
+   |
+LL | extern "ptx-kernel" fn not_copy(#[nvptx(grid_constant)] p: &NotCopy) {}
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^    -------- `NotCopy` does not implement `Copy`
+
+error: `#[nvptx(grid_constant)]` parameters must point to a type implementing `Copy`
+  --> $DIR/nvptx-grid-constant.rs:47:33
+   |
+LL | extern "ptx-kernel" fn interior(#[nvptx(grid_constant)] p: &Interior) {}
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^    --------- `Interior` does not implement `Copy`
+
+error: `#[nvptx(grid_constant)]` parameters must point to a type implementing `Freeze`
+  --> $DIR/nvptx-grid-constant.rs:47:33
+   |
+LL | extern "ptx-kernel" fn interior(#[nvptx(grid_constant)] p: &Interior) {}
+   |                                 ^^^^^^^^^^^^^^^^^^^^^^^    --------- `Interior` does not implement `Freeze`
+
+error: `#[nvptx(grid_constant)]` can only be applied to parameters of `extern "gpu-kernel"` or `extern "ptx-kernel"` functions
+  --> $DIR/nvptx-grid-constant.rs:51:13
+   |
+LL | fn rust_abi(#[nvptx(grid_constant)] p: &Params) {}
+   |             ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: `#[nvptx(grid_constant)]` can only be applied to parameters of `extern "gpu-kernel"` or `extern "ptx-kernel"` functions
+  --> $DIR/nvptx-grid-constant.rs:54:21
+   |
+LL | extern "C" fn c_abi(#[nvptx(grid_constant)] p: &Params) {}
+   |                     ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: `#[nvptx(grid_constant)]` can only be applied to parameters of `extern "gpu-kernel"` or `extern "ptx-kernel"` functions
+  --> $DIR/nvptx-grid-constant.rs:58:14
+   |
+LL |     let _ = |#[nvptx(grid_constant)] p: &Params| {};
+   |              ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 14 previous errors
+
+Some errors have detailed explanations: E0539, E0565.
+For more information about an error, try `rustc --explain E0539`.

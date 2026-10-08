@@ -15,7 +15,7 @@ use rustc_middle::mono::Visibility;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::{self as ty, TyCtxt};
 use rustc_span::{Span, bug};
-use rustc_target::spec::Os;
+use rustc_target::spec::{Arch, Os};
 
 use crate::diagnostics;
 use crate::target_features::{
@@ -574,11 +574,32 @@ fn codegen_fn_attrs(tcx: TyCtxt<'_>, did: LocalDefId) -> CodegenFnAttrs {
     let attrs = tcx.hir_attrs(tcx.local_def_id_to_hir_id(did));
 
     let interesting_spans = process_builtin_attrs(tcx, did, attrs, &mut codegen_fn_attrs);
+    process_param_attrs(tcx, did, &mut codegen_fn_attrs);
     handle_lang_items(tcx, did, &interesting_spans, attrs, &mut codegen_fn_attrs);
     apply_overrides(tcx, did, &mut codegen_fn_attrs);
     check_result(tcx, did, interesting_spans, &codegen_fn_attrs);
 
     codegen_fn_attrs
+}
+
+fn process_param_attrs(tcx: TyCtxt<'_>, did: LocalDefId, codegen_fn_attrs: &mut CodegenFnAttrs) {
+    if tcx.sess.target.arch != Arch::Nvptx64
+        || !matches!(tcx.def_kind(did), DefKind::Fn | DefKind::AssocFn)
+        || !matches!(
+            tcx.fn_sig(did).skip_binder().abi(),
+            ExternAbi::PtxKernel | ExternAbi::GpuKernel
+        )
+    {
+        return;
+    }
+    let Some(body) = tcx.hir_maybe_body_owned_by(did) else { return };
+    codegen_fn_attrs.grid_constant_params = body
+        .params
+        .iter()
+        .enumerate()
+        .filter(|(_, param)| find_attr!(tcx.hir_attrs(param.hir_id), NvptxGridConstant(..)))
+        .map(|(i, _)| i as u32)
+        .collect();
 }
 
 fn sanitizer_settings_for(tcx: TyCtxt<'_>, did: LocalDefId) -> SanitizerFnAttrs {

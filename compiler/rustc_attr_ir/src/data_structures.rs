@@ -1027,6 +1027,9 @@ pub enum AttributeKind {
     /// Represents `#[nvptx(...)]`
     Nvptx(NvptxAttr, Span),
 
+    /// Represents `#[nvptx(grid_constant)]` on a function parameter
+    NvptxGridConstant(Span),
+
     /// Represents `#[diagnostic::on_const]`.
     OnConst {
         /// The attribute path span.

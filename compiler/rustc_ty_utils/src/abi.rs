@@ -615,6 +615,25 @@ fn fn_abi_new_uncached<'tcx>(
         ),
     };
     fn_abi_adjust_for_abi(cx, &mut fn_abi, sig.abi());
+    if let Some(def_id) = determined_fn_def_id
+        && matches!(sig.abi(), ExternAbi::PtxKernel | ExternAbi::GpuKernel)
+    {
+        for &i in &tcx.codegen_fn_attrs(def_id).grid_constant_params {
+            let arg = &mut fn_abi.args[i as usize];
+            let pointee = arg.layout.ty.builtin_deref(true).unwrap();
+            let pointee =
+                cx.layout_of(pointee).map_err(|err| &*tcx.arena.alloc(FnAbiError::Layout(*err)))?;
+            let PassMode::Direct(attrs) = &mut arg.mode else {
+                bug!("grid constant parameter is not passed directly: {:?}", arg.mode)
+            };
+            if pointee.is_zst() {
+                continue;
+            }
+            attrs.set(ArgAttribute::GridConstant);
+            attrs.pointee_size = pointee.size;
+            attrs.pointee_align = Some(pointee.align.abi);
+        }
+    }
     debug!("fn_abi_new_uncached = {:?}", fn_abi);
     fn_abi_sanity_check(cx, &fn_abi, sig.abi());
     Ok(tcx.arena.alloc(fn_abi))

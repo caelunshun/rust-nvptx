@@ -11,3 +11,6 @@ use minicore::*;
 
 #[nvptx(max_registers(32))] //~ ERROR the `nvptx` attribute is an experimental feature
 extern "ptx-kernel" fn kernel() {}
+
+extern "ptx-kernel" fn kernel_param(#[nvptx(grid_constant)] p: &u32) {}
+//~^ ERROR the `nvptx` attribute is an experimental feature

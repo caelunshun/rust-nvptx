@@ -84,6 +84,36 @@ pub(crate) struct LlvmPtrAddrspaceNotCastable {
 }
 
 #[derive(Diagnostic)]
+#[diag(
+    "`#[nvptx(grid_constant)]` can only be applied to parameters of `extern \"gpu-kernel\"` or `extern \"ptx-kernel\"` functions"
+)]
+pub(crate) struct NvptxGridConstantNotKernel {
+    #[primary_span]
+    pub attr_span: Span,
+}
+
+#[derive(Diagnostic)]
+#[diag("`#[nvptx(grid_constant)]` parameters must be shared references")]
+pub(crate) struct NvptxGridConstantNotSharedRef<'tcx> {
+    #[primary_span]
+    pub attr_span: Span,
+    #[label("`{$ty}` is not a shared reference")]
+    pub ty_span: Span,
+    pub ty: Ty<'tcx>,
+}
+
+#[derive(Diagnostic)]
+#[diag("`#[nvptx(grid_constant)]` parameters must point to a type implementing `{$trait_name}`")]
+pub(crate) struct NvptxGridConstantMissingTrait<'tcx> {
+    #[primary_span]
+    pub attr_span: Span,
+    #[label("`{$ty}` does not implement `{$trait_name}`")]
+    pub ty_span: Span,
+    pub ty: Ty<'tcx>,
+    pub trait_name: &'static str,
+}
+
+#[derive(Diagnostic)]
 #[diag("`#[doc(alias = \"...\")]` isn't allowed on {$location}")]
 pub(crate) struct DocAliasBadLocation<'a> {
     #[primary_span]

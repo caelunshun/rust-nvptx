@@ -1107,6 +1107,7 @@ symbols! {
         globs,
         gpu_kernel: "gpu-kernel",
         gpu_launch_sized_workgroup_mem,
+        grid_constant,
         gt,
         guard,
         guard_patterns,

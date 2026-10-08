@@ -127,6 +127,8 @@ pub struct CodegenFnAttrs {
     pub instrument_fn: Option<InstrumentFnAttr>,
     /// The `#[nvptx(...)]` attribute.
     pub nvptx: Option<NvptxAttr>,
+    /// Indices of parameters marked `#[nvptx(grid_constant)]`.
+    pub grid_constant_params: Vec<u32>,
 }
 
 #[derive(Copy, Clone, Debug, TyEncodable, TyDecodable, StableHash, PartialEq, Eq)]
@@ -265,6 +267,7 @@ impl CodegenFnAttrs {
             objc_selector: None,
             instrument_fn: None,
             nvptx: None,
+            grid_constant_params: Vec::new(),
         }
     }
 

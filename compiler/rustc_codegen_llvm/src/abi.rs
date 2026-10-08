@@ -569,6 +569,18 @@ impl<'ll, 'tcx> FnAbiLlvmExt<'ll, 'tcx> for FnAbi<'tcx, Ty<'tcx>> {
                 }
                 PassMode::Direct(attrs) => {
                     let i = apply(attrs);
+                    if attrs.regular.contains(ArgAttribute::GridConstant) {
+                        let byval = llvm::CreateByValAttr(
+                            cx.llcx,
+                            cx.type_array(cx.type_i8(), attrs.pointee_size.bytes()),
+                        );
+                        let grid_constant = llvm::CreateAttrString(cx.llcx, "nvvm.grid_constant");
+                        attributes::apply_to_llfn(
+                            llfn,
+                            llvm::AttributePlace::Argument(i),
+                            &[byval, grid_constant],
+                        );
+                    }
                     if let BackendRepr::Scalar(scalar) = arg.layout.backend_repr {
                         apply_range_attr(llvm::AttributePlace::Argument(i), scalar);
                     }
@@ -734,6 +746,9 @@ impl<'ll, 'tcx> FnAbiLlvmExt<'ll, 'tcx> for FnAbi<'tcx, Ty<'tcx>> {
                     address_space: _,
                     mode: IndirectMode::Pointer,
                 } => {
+                    if attrs.regular.contains(ArgAttribute::GridConstant) {
+                        bug!("grid constant parameters cannot be passed at a call site");
+                    }
                     apply(bx.cx, attrs);
                 }
                 PassMode::Indirect {

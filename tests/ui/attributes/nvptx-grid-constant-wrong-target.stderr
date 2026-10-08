@@ -1,0 +1,8 @@
+error: `#[nvptx]` is only supported on nvptx targets
+  --> $DIR/nvptx-grid-constant-wrong-target.rs:12:31
+   |
+LL | extern "gpu-kernel" fn kernel(#[nvptx(grid_constant)] p: &u32) {}
+   |                               ^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error
+

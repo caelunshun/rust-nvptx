@@ -79,6 +79,7 @@ impl AttributeKind {
             NoStd => No,
             NonExhaustive(..) => Yes, // Needed for rustdoc
             Nvptx(..) => Yes,
+            NvptxGridConstant(..) => No,
             OnConst { .. } => Yes,
             OnMove { .. } => Yes,
             OnTypeError { .. } => Yes,
@@ -295,6 +296,7 @@ impl AttributeKind {
             NoStd => false,
             NonExhaustive(..) => false,
             Nvptx(..) => false,
+            NvptxGridConstant(..) => false,
             OnConst { .. } => false,
             OnMove { .. } => false,
             OnTypeError { .. } => false,

@@ -159,6 +159,9 @@ mod attr_impl {
             /// executing. Only valid on arguments (including return values that are passed
             /// indirectly as arguments).
             const NoFree   = 1 << 9;
+            /// The pointer argument is an nvptx kernel `byval` parameter that is marked
+            /// `nvvm.grid_constant`. Its pointee is described by `pointee_size` and `pointee_align`.
+            const GridConstant = 1 << 10;
         }
     }
     rustc_data_structures::external_bitflags_debug! { ArgAttribute }

@@ -19,14 +19,20 @@ pub(crate) struct NvptxParser;
 
 impl SingleAttributeParser for NvptxParser {
     const PATH: &[Symbol] = &[sym::nvptx];
-    const ALLOWED_TARGETS: AllowedTargets<'_> = AllowedTargets::AllowList(&[Allow(Target::Fn)]);
+    const ALLOWED_TARGETS: AllowedTargets<'_> =
+        AllowedTargets::AllowList(&[Allow(Target::Fn), Allow(Target::Param)]);
     const TEMPLATE: AttributeTemplate = template!(List: &[
         "max_ctas_per_cluster(n), min_ctas_per_sm(n), max_registers(n), \
-         max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z)"
+         max_threads_per_cta(x, y, z), exact_threads_per_cta(x, y, z), exact_cluster_dim(x, y, z)",
+        "grid_constant"
     ]);
     const STABILITY: AttributeStability = unstable!(nvptx_ext);
 
     fn convert(cx: &mut AcceptContext<'_, '_>, args: &ArgParser) -> Option<AttributeKind> {
+        if cx.target == Target::Param {
+            return convert_param(cx, args);
+        }
+
         let list = cx.expect_list(args, cx.attr_span)?;
         if list.is_empty() {
             cx.adcx().expected_at_least_one_argument(list.span);
@@ -106,6 +112,21 @@ impl SingleAttributeParser for NvptxParser {
 
         Some(AttributeKind::Nvptx(attr, cx.attr_span))
     }
+}
+
+fn convert_param(cx: &mut AcceptContext<'_, '_>, args: &ArgParser) -> Option<AttributeKind> {
+    let list = cx.expect_list(args, cx.attr_span)?;
+    let item = cx.expect_single(list)?;
+    let Some(meta_item) = item.meta_item() else {
+        cx.adcx().expected_not_literal(item.span());
+        return None;
+    };
+    if meta_item.ident().map(|ident| ident.name) != Some(sym::grid_constant) {
+        cx.adcx().expected_specific_argument(meta_item.path().span(), &[sym::grid_constant]);
+        return None;
+    }
+    cx.expect_no_args(meta_item.args())?;
+    Some(AttributeKind::NvptxGridConstant(cx.attr_span))
 }
 
 fn parse_scalar(cx: &mut AcceptContext<'_, '_>, args: &ArgParser, span: Span) -> Option<u32> {
