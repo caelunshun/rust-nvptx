@@ -13,6 +13,10 @@
 
 use crate::ffi::c_void;
 
+mod cache;
+mod cvt;
+mod cvt_half;
+mod cvt_narrow;
 mod float;
 mod int;
 mod mem;
@@ -24,6 +28,14 @@ mod sreg;
 mod sync;
 mod warp;
 
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cache::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cvt::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cvt_half::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cvt_narrow::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use float::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]

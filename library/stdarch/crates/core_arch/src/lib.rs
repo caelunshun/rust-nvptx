@@ -41,7 +41,7 @@
     movrs_target_feature,
     clflushopt_target_feature,
     min_adt_const_params,
-    lang_items,
+    lang_items
 )]
 #![cfg_attr(
     test,

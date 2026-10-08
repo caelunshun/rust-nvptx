@@ -20,6 +20,8 @@ unsafe extern "llvm-intrinsic" {
     fn llvm_mapa(p: *mut c_void, rank: u32) -> *mut c_void;
     #[link_name = "llvm.nvvm.getctarank"]
     fn llvm_getctarank(p: *const c_void) -> u32;
+    #[link_name = "llvm.nvvm.st.bulk"]
+    fn llvm_st_bulk(p: *mut c_void, size: u64, initval: u64);
 }
 
 /// A PTX state space.
@@ -76,4 +78,19 @@ pub unsafe fn mapa<T>(ptr: *mut T, rank: u32) -> *mut T {
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub unsafe fn getctarank<T>(ptr: *const T) -> u32 {
     llvm_getctarank(ptr.cast())
+}
+
+/// Initializes the `size` bytes of memory starting at `ptr` to zero, using the bulk store
+/// instruction.
+///
+/// `size` must be a multiple of 8.
+///
+/// Requires `sm_100` and PTX ISA 8.6.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-st-bulk>
+#[inline]
+#[target_feature(enable = "sm_100,ptx86")]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub unsafe fn st_bulk(ptr: *mut c_void, size: u64) {
+    llvm_st_bulk(ptr, size, 0)
 }

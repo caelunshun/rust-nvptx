@@ -29,6 +29,8 @@ ADDRSPACE_PTR_TYS = {
 # Each entry is (class, list of name prefixes after `llvm.nvvm.`). A trailing `$` requires
 # an exact match.
 CLASS_RULES = [
+    # Overloaded on the pointer type, but only selected for non-generic address spaces.
+    ("blocked-addrspace", ["tensormap.replace."]),
     (
         "excluded-texsurf",
         ["tex.", "tld4.", "suld.", "sust.", "txq.", "suq.", "istypep."],
@@ -77,6 +79,11 @@ CLASS_RULES = [
             "fmax.ftz.xorsign.abs.bf16",
             # Emits `lg2.approx.f64`, which doesn't exist in PTX.
             "lg2.approx.d",
+            # No lowering at all.
+            "bf2h.",
+            # ptxas 13.4 fails with an internal compiler error on any `.s2f6x2` destination.
+            "ff.to.s2f6x2.",
+            "bf16x2.to.s2f6x2.",
         ],
     ),
     # Used internally by NVVM / the backend; not meaningful as user-facing API.
@@ -88,6 +95,8 @@ CLASS_RULES = [
             "reflect",
             "texsurf.handle",
             "lohi.i2d",
+            "d2i.hi",
+            "d2i.lo",
             # Lowers to `sqrt.rn.f32` or `sqrt.approx.f32` depending on compiler options.
             "sqrt.f$",
             "read.ptx.sreg.tid.w",
@@ -127,6 +136,15 @@ SUBTARGET_PREDICATES = {
     "hasF32x2Instructions": "sm_100 & ptx86",
     "hasCvtaParam": "ptx77",
     "hasFP8ConversionSupport": "sm_89 & ptx81 | sm_90 & ptx78",
+}
+
+# Requirements of intrinsics selected by custom C++ lowering, keyed by name prefix after
+# `llvm.nvvm.`.
+CUSTOM_REQUIREMENTS = {
+    # `hasConvertWithStochasticRounding`
+    "f32x4.to.": ["sm_100a & ptx87", "sm_103a & ptx87"],
+    # Matched through a `PatFrag`.
+    "prefetch.tensormap": ["sm_90 & ptx80"],
 }
 
 # Predicates that describe codegen options rather than target requirements.
@@ -296,6 +314,10 @@ def main():
         ret = [normalize_type(intr, t) for t in rec["RetTypes"]]
         params = [normalize_type(intr, t) for t in rec["ParamTypes"]]
         alts = sorted(reqs.get(rec_name, []))
+        short = name[len("llvm.nvvm.") :]
+        for prefix, custom in CUSTOM_REQUIREMENTS.items():
+            if short.startswith(prefix):
+                alts = custom
         entries.append(
             {
                 "name": name,
