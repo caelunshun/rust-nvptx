@@ -362,7 +362,7 @@ impl<'ll, 'tcx> AsmBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
         )
         .unwrap_or_else(|| span_bug!(line_spans[0], "LLVM asm constraint validation failed"));
 
-        let mut attrs = SmallVec::<[_; 2]>::new();
+        let mut attrs = SmallVec::<[_; 3]>::new();
         if options.contains(InlineAsmOptions::PURE) {
             if options.contains(InlineAsmOptions::NOMEM) {
                 attrs.push(llvm::MemoryEffects::None.create_attr(self.cx.llcx));
@@ -374,6 +374,11 @@ impl<'ll, 'tcx> AsmBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
             attrs.push(llvm::MemoryEffects::InaccessibleMemOnly.create_attr(self.cx.llcx));
         } else if options.contains(InlineAsmOptions::READONLY) {
             attrs.push(llvm::MemoryEffects::ReadOnlyNotPure.create_attr(self.cx.llcx));
+        }
+        if self.cx.sess().target.is_like_gpu {
+            // Inline assembly may contain convergent operations (e.g. barriers),
+            // so conservatively mark it convergent like we do for functions.
+            attrs.push(llvm::AttributeKind::Convergent.create_attr(self.cx.llcx));
         }
         attributes::apply_to_callsite(result, llvm::AttributePlace::Function, &{ attrs });
 
