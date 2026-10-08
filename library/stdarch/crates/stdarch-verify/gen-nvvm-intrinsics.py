@@ -25,12 +25,15 @@ ADDRSPACE_PTR_TYS = {
     "llvm_shared_cluster_ptr_ty": "ptr addrspace(7)",
 }
 
-# Classification rules, checked in order after the address-space check.
+# Address spaces that generic pointers can't be converted to, so intrinsics taking or returning
+# pointers in them can't be exposed. Pointers in other address spaces are autocast from generic
+# pointers by rustc.
+BLOCKED_ADDRSPACE_TYS = ["ptr addrspace(6)"]
+
+# Classification rules, checked in order before the address-space check.
 # Each entry is (class, list of name prefixes after `llvm.nvvm.`). A trailing `$` requires
 # an exact match.
 CLASS_RULES = [
-    # Overloaded on the pointer type, but only selected for non-generic address spaces.
-    ("blocked-addrspace", ["tensormap.replace."]),
     (
         "excluded-texsurf",
         ["tex.", "tld4.", "suld.", "sust.", "txq.", "suq.", "istypep."],
@@ -38,17 +41,6 @@ CLASS_RULES = [
     (
         "excluded-matrix",
         ["wmma.", "mma.", "ldmatrix.", "stmatrix.", "movmatrix.", "wgmma.", "tcgen05."],
-    ),
-    # Companions of instructions that are blocked on address-space pointers.
-    (
-        "deferred",
-        [
-            "cp.async.commit.group",
-            "cp.async.wait.",
-            "cp.async.mbarrier.",
-            "cp.async.bulk.commit.group",
-            "cp.async.bulk.wait.group",
-        ],
     ),
     # Pre-Volta warp intrinsics without `.sync`, unavailable for sm_70+ with PTX ISA 6.4+.
     (
@@ -145,6 +137,19 @@ CUSTOM_REQUIREMENTS = {
     "f32x4.to.": ["sm_100a & ptx87", "sm_103a & ptx87"],
     # Matched through a `PatFrag`.
     "prefetch.tensormap": ["sm_90 & ptx80"],
+    # Selected in `NVPTXDAGToDAGISel::SelectCpAsyncBulkTensorReduceCommon`.
+    "cp.async.bulk.tensor.reduce.": ["sm_90 & ptx80"],
+    # Base requirements; some immediate values require newer targets (checked during lowering).
+    "tensormap.replace.": [
+        "sm_90a & ptx83 | sm_100a & ptx83 | sm_101a & ptx83 | sm_120a & ptx83"
+        " | sm_90f & ptx88 | sm_100f & ptx88 | sm_101f & ptx88 | sm_120f & ptx88"
+        " | sm_90f & ptx90 | sm_100f & ptx90 | sm_110f & ptx90 | sm_120f & ptx90"
+    ],
+    "tensormap.replace.swizzle.atomicity": [
+        "sm_100a & ptx87 | sm_101a & ptx87 | sm_120a & ptx87"
+        " | sm_100f & ptx88 | sm_101f & ptx88 | sm_120f & ptx88"
+        " | sm_100f & ptx90 | sm_110f & ptx90 | sm_120f & ptx90"
+    ],
 }
 
 # Predicates that describe codegen options rather than target requirements.
@@ -210,12 +215,12 @@ def immargs(intr, rec):
 
 
 def classify(name, tys):
-    if any(t.startswith("ptr addrspace") for t in tys):
-        return "blocked-addrspace"
     short = name[len("llvm.nvvm.") :]
     for cls, prefixes in CLASS_RULES:
         if any(short == p[:-1] if p.endswith("$") else short.startswith(p) for p in prefixes):
             return cls
+    if any(t in BLOCKED_ADDRSPACE_TYS for t in tys):
+        return "blocked-addrspace"
     return "in-scope"
 
 

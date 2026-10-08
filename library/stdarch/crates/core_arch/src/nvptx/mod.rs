@@ -14,11 +14,14 @@
 use crate::ffi::c_void;
 
 mod cache;
+mod cp_async;
+mod cp_async_bulk_tensor;
 mod cvt;
 mod cvt_half;
 mod cvt_narrow;
 mod float;
 mod int;
+mod mbarrier;
 mod mem;
 mod minmax;
 mod misc;
@@ -26,10 +29,15 @@ mod modifiers;
 mod packed;
 mod sreg;
 mod sync;
+mod tensormap;
 mod warp;
 
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use cache::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cp_async::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use cp_async_bulk_tensor::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use cvt::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
@@ -40,6 +48,8 @@ pub use cvt_narrow::*;
 pub use float::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use int::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use mbarrier::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use mem::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
@@ -54,6 +64,8 @@ pub use packed::*;
 pub use sreg::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use sync::*;
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub use tensormap::*;
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub use warp::*;
 

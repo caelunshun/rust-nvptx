@@ -9,6 +9,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
+use syn::parse::Parse;
+use syn::punctuated::Punctuated;
 
 #[derive(Deserialize)]
 struct Intrinsic {
@@ -79,6 +81,67 @@ fn llvm_types(ty: &syn::Type) -> Result<Vec<String>, String> {
     })
 }
 
+/// Parses the argument and return address spaces of `#[rustc_llvm_ptr_addrspace(args(..), ret(..))]`,
+/// possibly nested in `#[cfg_attr(..)]`.
+fn ptr_addrspaces(attrs: &[syn::Attribute]) -> (Vec<u32>, Option<u32>) {
+    let mut args = Vec::new();
+    let mut ret = None;
+    for attr in attrs {
+        let lists = if attr.path().is_ident("cfg_attr") {
+            attr.parse_args_with(Punctuated::<syn::Meta, syn::Token![,]>::parse_terminated)
+                .unwrap()
+                .into_iter()
+                .skip(1)
+                .collect()
+        } else {
+            vec![attr.meta.clone()]
+        };
+        for meta in lists {
+            let syn::Meta::List(list) = meta else {
+                continue;
+            };
+            if !list.path.is_ident("rustc_llvm_ptr_addrspace") {
+                continue;
+            }
+            list.parse_nested_meta(|meta| {
+                let content;
+                syn::parenthesized!(content in meta.input);
+                let values = content
+                    .parse_terminated(syn::LitInt::parse, syn::Token![,])?
+                    .iter()
+                    .map(|lit| lit.base10_parse::<u32>())
+                    .collect::<syn::Result<Vec<_>>>()?;
+                if meta.path.is_ident("args") {
+                    args = values;
+                } else if meta.path.is_ident("ret") {
+                    ret = values.first().copied();
+                } else {
+                    return Err(meta.error("unknown key"));
+                }
+                Ok(())
+            })
+            .unwrap();
+        }
+    }
+    (args, ret)
+}
+
+fn with_addrspace(tys: Vec<String>, addrspace: Option<&u32>) -> Vec<String> {
+    match addrspace {
+        Some(&n) if n != 0 => tys
+            .into_iter()
+            .map(|t| {
+                if t == "ptr" {
+                    format!("ptr addrspace({n})")
+                } else {
+                    t
+                }
+            })
+            .collect(),
+        _ => tys,
+    }
+}
+
 fn parse_decls(file: &Path) -> Vec<Decl> {
     let src = std::fs::read_to_string(file).unwrap();
     let ast = syn::parse_file(&src).unwrap();
@@ -116,12 +179,16 @@ fn parse_decls(file: &Path) -> Vec<Decl> {
             }
             let rust_name = f.sig.ident.to_string();
             let err = |e: String| -> ! { panic!("{}: `{rust_name}`: {e}", file.display()) };
+            let (arg_addrspaces, ret_addrspace) = ptr_addrspaces(&f.attrs);
             let params = f
                 .sig
                 .inputs
                 .iter()
-                .map(|arg| match arg {
-                    syn::FnArg::Typed(t) => llvm_types(&t.ty),
+                .enumerate()
+                .map(|(i, arg)| match arg {
+                    syn::FnArg::Typed(t) => {
+                        llvm_types(&t.ty).map(|tys| with_addrspace(tys, arg_addrspaces.get(i)))
+                    }
                     syn::FnArg::Receiver(_) => unreachable!(),
                 })
                 .collect::<Result<Vec<_>, _>>()
@@ -132,7 +199,13 @@ fn parse_decls(file: &Path) -> Vec<Decl> {
                 syn::ReturnType::Type(_, ty) if matches!(**ty, syn::Type::Never(_)) => {
                     (vec![], true)
                 }
-                syn::ReturnType::Type(_, ty) => (llvm_types(ty).unwrap_or_else(|e| err(e)), false),
+                syn::ReturnType::Type(_, ty) => (
+                    with_addrspace(
+                        llvm_types(ty).unwrap_or_else(|e| err(e)),
+                        ret_addrspace.as_ref(),
+                    ),
+                    false,
+                ),
             };
             decls.push(Decl {
                 link_name,
@@ -163,7 +236,9 @@ fn compatible(rust: &str, llvm: &str, overloads: &mut Vec<String>) -> bool {
     match llvm {
         "anyint" if rust.starts_with('i') && !rust.contains('x') => bound(overloads),
         "anyfloat" if matches!(rust, "f16" | "f32" | "f64" | "v2f16") => bound(overloads),
-        "anyptr" if rust == "ptr" => bound(overloads),
+        "anyptr" if rust.starts_with("ptr") => bound(overloads),
+        // Generic pointers are autocast to pointers in other address spaces.
+        _ if llvm.starts_with("ptr addrspace(") => return rust == "ptr" || rust == llvm,
         "any" => bound(overloads),
         _ if llvm.starts_with("match") => {
             let idx: usize = llvm["match".len()..].parse().unwrap();

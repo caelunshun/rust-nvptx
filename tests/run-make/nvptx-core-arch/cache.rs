@@ -15,14 +15,28 @@ use core::ffi::c_void;
 // CHECK: applypriority.L2::evict_normal [{{%rd[0-9]+}}], 128;
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn cache_applypriority_l2(p: *const *const u32) {
-    unsafe { applypriority_l2_evict_normal(*p) }
+    unsafe { applypriority_l2_evict_normal::<{ StateSpace::Generic }, _>(*p) }
+}
+
+// CHECK-LABEL: .entry cache_applypriority_l2_global(
+// CHECK: applypriority.global.L2::evict_normal [{{%rd[0-9]+}}], 128;
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn cache_applypriority_l2_global(p: *const *const u32) {
+    unsafe { applypriority_l2_evict_normal::<{ StateSpace::Global }, _>(*p) }
 }
 
 // CHECK-LABEL: .entry cache_discard_l2(
 // CHECK: discard.L2 [{{%rd[0-9]+}}], 128;
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn cache_discard_l2(p: *const *const u32) {
-    unsafe { discard_l2(*p) }
+    unsafe { discard_l2::<{ StateSpace::Generic }, _>(*p) }
+}
+
+// CHECK-LABEL: .entry cache_discard_l2_global(
+// CHECK: discard.global.L2 [{{%rd[0-9]+}}], 128;
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn cache_discard_l2_global(p: *const *const u32) {
+    unsafe { discard_l2::<{ StateSpace::Global }, _>(*p) }
 }
 
 // CHECK-LABEL: .entry cache_ldu(
@@ -56,10 +70,46 @@ pub unsafe extern "ptx-kernel" fn cache_ldu(out: *mut u64, p: *const *const c_vo
 pub unsafe extern "ptx-kernel" fn cache_prefetch(p: *const *const c_void) {
     unsafe {
         let p = *p;
-        prefetch_l1(p);
-        prefetch_l2(p);
+        prefetch_l1::<{ StateSpace::Generic }, _>(p);
+        prefetch_l2::<{ StateSpace::Generic }, _>(p);
         prefetchu_l1(p);
         prefetch_tensormap(p);
+    }
+}
+
+// CHECK-LABEL: .entry cache_prefetch_global(
+// CHECK: prefetch.global.L1 [{{%rd[0-9]+}}];
+// CHECK: prefetch.global.L2 [{{%rd[0-9]+}}];
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn cache_prefetch_global(p: *const *const c_void) {
+    unsafe {
+        let p = *p;
+        prefetch_l1::<{ StateSpace::Global }, _>(p);
+        prefetch_l2::<{ StateSpace::Global }, _>(p);
+    }
+}
+
+// CHECK-LABEL: .entry cache_prefetch_l2_evict(
+// CHECK: prefetch.global.L2::evict_normal [{{%rd[0-9]+}}];
+// CHECK: prefetch.global.L2::evict_last [{{%rd[0-9]+}}];
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn cache_prefetch_l2_evict(p: *const *const c_void) {
+    unsafe {
+        let p = *p;
+        prefetch_l2_evict::<{ StateSpace::Global }, { L2EvictionPriority::EvictNormal }, _>(p);
+        prefetch_l2_evict::<{ StateSpace::Global }, { L2EvictionPriority::EvictLast }, _>(p);
+    }
+}
+
+// CHECK-LABEL: .entry cache_prefetch_local(
+// CHECK: prefetch.local.L1 [{{%rd[0-9]+}}];
+// CHECK: prefetch.local.L2 [{{%rd[0-9]+}}];
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn cache_prefetch_local(p: *const *const c_void) {
+    unsafe {
+        let p = *p;
+        prefetch_l1::<{ StateSpace::Local }, _>(p);
+        prefetch_l2::<{ StateSpace::Local }, _>(p);
     }
 }
 

@@ -1,22 +1,40 @@
 // --- LLM-generated --- //
 //! Cache control: prefetches, eviction priorities and read-only uniform loads.
 
+use super::StateSpace;
 use crate::ffi::c_void;
+use crate::marker::ConstParamTy;
 
 #[allow(improper_ctypes)]
 unsafe extern "llvm-intrinsic" {
     #[link_name = "llvm.nvvm.prefetch.L1"]
     fn llvm_prefetch_l1(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.global.L1"]
+    fn llvm_prefetch_global_l1(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.local.L1"]
+    fn llvm_prefetch_local_l1(p: *const c_void);
     #[link_name = "llvm.nvvm.prefetch.L2"]
     fn llvm_prefetch_l2(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.global.L2"]
+    fn llvm_prefetch_global_l2(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.local.L2"]
+    fn llvm_prefetch_local_l2(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.global.L2.evict.normal"]
+    fn llvm_prefetch_global_l2_evict_normal(p: *const c_void);
+    #[link_name = "llvm.nvvm.prefetch.global.L2.evict.last"]
+    fn llvm_prefetch_global_l2_evict_last(p: *const c_void);
     #[link_name = "llvm.nvvm.prefetchu.L1"]
     fn llvm_prefetchu_l1(p: *const c_void);
     #[link_name = "llvm.nvvm.prefetch.tensormap.p0"]
     fn llvm_prefetch_tensormap(p: *const c_void);
     #[link_name = "llvm.nvvm.applypriority.L2.evict.normal"]
     fn llvm_applypriority_l2_evict_normal(p: *const c_void, size: u64);
+    #[link_name = "llvm.nvvm.applypriority.global.L2.evict.normal"]
+    fn llvm_applypriority_global_l2_evict_normal(p: *const c_void, size: u64);
     #[link_name = "llvm.nvvm.discard.L2"]
     fn llvm_discard_l2(p: *const c_void, size: u64);
+    #[link_name = "llvm.nvvm.discard.global.L2"]
+    fn llvm_discard_global_l2(p: *const c_void, size: u64);
     #[link_name = "llvm.nvvm.ldu.global.i.i8.p0"]
     fn llvm_ldu_global_i8(p: *const c_void, align: i32) -> u8;
     #[link_name = "llvm.nvvm.ldu.global.i.i16.p0"]
@@ -199,26 +217,91 @@ unsafe extern "llvm-intrinsic" {
 
 /// Prefetches the cache line containing `ptr` into the L1 cache.
 ///
+/// `SPACE` must be [`StateSpace::Generic`], [`StateSpace::Global`] or [`StateSpace::Local`], and
+/// `ptr` must fall within that state space.
+///
 /// Requires `sm_90` and PTX ISA 8.0.
 ///
 /// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-prefetch>
 #[inline]
 #[target_feature(enable = "sm_90,ptx80")]
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn prefetch_l1<T>(ptr: *const T) {
-    llvm_prefetch_l1(ptr.cast())
+pub unsafe fn prefetch_l1<const SPACE: StateSpace, T>(ptr: *const T) {
+    static_assert!(
+        matches!(
+            SPACE,
+            StateSpace::Generic | StateSpace::Global | StateSpace::Local
+        ),
+        "prefetch_l1 only supports the generic, global and local state spaces"
+    );
+    match SPACE {
+        StateSpace::Generic => llvm_prefetch_l1(ptr.cast()),
+        StateSpace::Global => llvm_prefetch_global_l1(ptr.cast()),
+        StateSpace::Local => llvm_prefetch_local_l1(ptr.cast()),
+        _ => unreachable!(),
+    }
 }
 
 /// Prefetches the cache line containing `ptr` into the L2 cache.
 ///
+/// `SPACE` must be [`StateSpace::Generic`], [`StateSpace::Global`] or [`StateSpace::Local`], and
+/// `ptr` must fall within that state space.
+///
 /// Requires `sm_90` and PTX ISA 8.0.
 ///
 /// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-prefetch>
 #[inline]
 #[target_feature(enable = "sm_90,ptx80")]
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn prefetch_l2<T>(ptr: *const T) {
-    llvm_prefetch_l2(ptr.cast())
+pub unsafe fn prefetch_l2<const SPACE: StateSpace, T>(ptr: *const T) {
+    static_assert!(
+        matches!(
+            SPACE,
+            StateSpace::Generic | StateSpace::Global | StateSpace::Local
+        ),
+        "prefetch_l2 only supports the generic, global and local state spaces"
+    );
+    match SPACE {
+        StateSpace::Generic => llvm_prefetch_l2(ptr.cast()),
+        StateSpace::Global => llvm_prefetch_global_l2(ptr.cast()),
+        StateSpace::Local => llvm_prefetch_local_l2(ptr.cast()),
+        _ => unreachable!(),
+    }
+}
+
+/// The L2 eviction priority of a prefetch (`.level::eviction_priority`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, ConstParamTy)]
+#[non_exhaustive]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub enum L2EvictionPriority {
+    /// Evict the cache line normally (`.L2::evict_normal`).
+    EvictNormal,
+    /// Evict the cache line last (`.L2::evict_last`).
+    EvictLast,
+}
+
+/// Prefetches the cache line containing `ptr` into the L2 cache with the eviction priority
+/// `PRIORITY`.
+///
+/// `SPACE` must be [`StateSpace::Global`], and `ptr` must point to global memory.
+///
+/// Requires `sm_90` and PTX ISA 8.0.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-prefetch>
+#[inline]
+#[target_feature(enable = "sm_90,ptx80")]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub unsafe fn prefetch_l2_evict<const SPACE: StateSpace, const PRIORITY: L2EvictionPriority, T>(
+    ptr: *const T,
+) {
+    static_assert!(
+        matches!(SPACE, StateSpace::Global),
+        "prefetch_l2_evict only supports the global state space"
+    );
+    match PRIORITY {
+        L2EvictionPriority::EvictNormal => llvm_prefetch_global_l2_evict_normal(ptr.cast()),
+        L2EvictionPriority::EvictLast => llvm_prefetch_global_l2_evict_last(ptr.cast()),
+    }
 }
 
 /// Prefetches the cache line containing `ptr` into the L1 cache for uniform (read-only) use.
@@ -247,11 +330,11 @@ pub unsafe fn prefetch_tensormap(tmap: *const c_void) {
     llvm_prefetch_tensormap(tmap)
 }
 
-/// Sets the eviction priority of the 128 bytes of global memory starting at `ptr` to
-/// `evict_normal` in the L2 cache.
+/// Sets the eviction priority of the 128 bytes of memory starting at `ptr` to `evict_normal`
+/// in the L2 cache.
 ///
-/// `ptr` must point to global memory. Exactly 128 bytes are affected, as PTX only supports
-/// that size.
+/// `SPACE` must be [`StateSpace::Generic`] or [`StateSpace::Global`], and `ptr` must fall within
+/// that state space. Exactly 128 bytes are affected, as PTX only supports that size.
 ///
 /// Requires `sm_80` and PTX ISA 7.4.
 ///
@@ -259,15 +342,24 @@ pub unsafe fn prefetch_tensormap(tmap: *const c_void) {
 #[inline]
 #[target_feature(enable = "sm_80,ptx74")]
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn applypriority_l2_evict_normal<T>(ptr: *const T) {
-    llvm_applypriority_l2_evict_normal(ptr.cast(), 128)
+pub unsafe fn applypriority_l2_evict_normal<const SPACE: StateSpace, T>(ptr: *const T) {
+    static_assert!(
+        matches!(SPACE, StateSpace::Generic | StateSpace::Global),
+        "applypriority_l2_evict_normal only supports the generic and global state spaces"
+    );
+    match SPACE {
+        StateSpace::Generic => llvm_applypriority_l2_evict_normal(ptr.cast(), 128),
+        StateSpace::Global => llvm_applypriority_global_l2_evict_normal(ptr.cast(), 128),
+        _ => unreachable!(),
+    }
 }
 
-/// Invalidates the 128 bytes of global memory starting at `ptr` in the L2 cache, without
-/// writing them back to memory.
+/// Invalidates the 128 bytes of memory starting at `ptr` in the L2 cache, without writing them
+/// back to memory.
 ///
-/// `ptr` must point to global memory. Exactly 128 bytes are affected, as PTX only supports
-/// that size. The contents of the affected memory are undefined afterwards.
+/// `SPACE` must be [`StateSpace::Generic`] or [`StateSpace::Global`], and `ptr` must fall within
+/// that state space. Exactly 128 bytes are affected, as PTX only supports that size. The contents
+/// of the affected memory are undefined afterwards.
 ///
 /// Requires `sm_80` and PTX ISA 7.4.
 ///
@@ -275,8 +367,16 @@ pub unsafe fn applypriority_l2_evict_normal<T>(ptr: *const T) {
 #[inline]
 #[target_feature(enable = "sm_80,ptx74")]
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn discard_l2<T>(ptr: *const T) {
-    llvm_discard_l2(ptr.cast(), 128)
+pub unsafe fn discard_l2<const SPACE: StateSpace, T>(ptr: *const T) {
+    static_assert!(
+        matches!(SPACE, StateSpace::Generic | StateSpace::Global),
+        "discard_l2 only supports the generic and global state spaces"
+    );
+    match SPACE {
+        StateSpace::Generic => llvm_discard_l2(ptr.cast(), 128),
+        StateSpace::Global => llvm_discard_global_l2(ptr.cast(), 128),
+        _ => unreachable!(),
+    }
 }
 
 /// Loads a `u8` from `ptr` through the read-only data path.

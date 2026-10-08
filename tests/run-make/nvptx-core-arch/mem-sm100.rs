@@ -16,5 +16,12 @@ use core::ffi::c_void;
 // CHECK: st.bulk [{{%rd[0-9]+}}], {{%rd[0-9]+}}, 0;
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn mem_st_bulk(p: *const *mut c_void) {
-    unsafe { st_bulk(*p, 64) }
+    unsafe { st_bulk::<{ StateSpace::Generic }>(*p, 64) }
+}
+
+// CHECK-LABEL: .entry mem_st_bulk_shared(
+// CHECK: st.bulk.shared::cta [{{%rd[0-9]+}}], {{%rd[0-9]+}}, 0;
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn mem_st_bulk_shared(p: *const *mut c_void) {
+    unsafe { st_bulk::<{ StateSpace::SharedCta }>(*p, 64) }
 }

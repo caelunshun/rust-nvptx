@@ -101,22 +101,6 @@ unsafe extern "llvm-intrinsic" {
     fn llvm_fence_proxy_tensormap_acquire_gpu(addr: *const c_void, size: u32);
     #[link_name = "llvm.nvvm.fence.proxy.tensormap_generic.acquire.sys"]
     fn llvm_fence_proxy_tensormap_acquire_sys(addr: *const c_void, size: u32);
-    #[link_name = "llvm.nvvm.mbarrier.init"]
-    fn llvm_mbarrier_init(addr: *mut c_void, count: u32);
-    #[link_name = "llvm.nvvm.mbarrier.inval"]
-    fn llvm_mbarrier_inval(addr: *mut c_void);
-    #[link_name = "llvm.nvvm.mbarrier.arrive"]
-    fn llvm_mbarrier_arrive(addr: *mut c_void) -> u64;
-    #[link_name = "llvm.nvvm.mbarrier.arrive.noComplete"]
-    fn llvm_mbarrier_arrive_nocomplete(addr: *mut c_void, count: u32) -> u64;
-    #[link_name = "llvm.nvvm.mbarrier.arrive.drop"]
-    fn llvm_mbarrier_arrive_drop(addr: *mut c_void) -> u64;
-    #[link_name = "llvm.nvvm.mbarrier.arrive.drop.noComplete"]
-    fn llvm_mbarrier_arrive_drop_nocomplete(addr: *mut c_void, count: u32) -> u64;
-    #[link_name = "llvm.nvvm.mbarrier.test.wait"]
-    fn llvm_mbarrier_test_wait(addr: *mut c_void, state: u64) -> bool;
-    #[link_name = "llvm.nvvm.mbarrier.pending.count"]
-    fn llvm_mbarrier_pending_count(state: u64) -> u32;
     #[link_name = "llvm.nvvm.griddepcontrol.launch.dependents"]
     fn llvm_griddepcontrol_launch_dependents();
     #[link_name = "llvm.nvvm.griddepcontrol.wait"]
@@ -129,6 +113,13 @@ unsafe extern "llvm-intrinsic" {
     fn llvm_clusterlaunchcontrol_query_cancel_get_first_ctaid_y(response: u128) -> u32;
     #[link_name = "llvm.nvvm.clusterlaunchcontrol.query_cancel.get_first_ctaid.z"]
     fn llvm_clusterlaunchcontrol_query_cancel_get_first_ctaid_z(response: u128) -> u32;
+    #[link_name = "llvm.nvvm.clusterlaunchcontrol.try_cancel.async.shared"]
+    fn llvm_clusterlaunchcontrol_try_cancel_async(response: *mut c_void, mbar: *mut c_void);
+    #[link_name = "llvm.nvvm.clusterlaunchcontrol.try_cancel.async.multicast.shared"]
+    fn llvm_clusterlaunchcontrol_try_cancel_async_multicast(
+        response: *mut c_void,
+        mbar: *mut c_void,
+    );
 }
 
 /// Reduction operation of [`barrier_red_pred`] and [`barrier_red_pred_count`].
@@ -522,137 +513,6 @@ pub unsafe fn fence_proxy_tensormap_generic_acquire<const SCOPE: Scope>(addr: *c
     }
 }
 
-/// Initializes the mbarrier object at the generic address `addr` with the expected arrival
-/// count `count`.
-///
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-init>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_init(addr: *mut u64, count: u32) {
-    llvm_mbarrier_init(addr.cast(), count)
-}
-
-/// Invalidates the mbarrier object at the generic address `addr`.
-///
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-inval>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_inval(addr: *mut u64) {
-    llvm_mbarrier_inval(addr.cast())
-}
-
-/// Performs an arrive-on operation on the mbarrier object at the generic address `addr`, and
-/// returns the opaque state of the mbarrier object prior to the operation.
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-arrive>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_arrive(addr: *mut u64) -> u64 {
-    llvm_mbarrier_arrive(addr.cast())
-}
-
-/// Performs an arrive-on operation with the count `count` on the mbarrier object at the generic
-/// address `addr`, and returns the opaque state of the mbarrier object prior to the operation.
-///
-/// The operation must not cause the mbarrier object to complete its current phase.
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-arrive>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_arrive_nocomplete(addr: *mut u64, count: u32) -> u64 {
-    llvm_mbarrier_arrive_nocomplete(addr.cast(), count)
-}
-
-/// Decrements the expected arrival count of the mbarrier object at the generic address `addr`,
-/// performs an arrive-on operation, and returns the opaque state of the mbarrier object prior to
-/// the arrive-on operation.
-///
-/// The decrement applies to all subsequent phases of the mbarrier object.
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-arrive-drop>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_arrive_drop(addr: *mut u64) -> u64 {
-    llvm_mbarrier_arrive_drop(addr.cast())
-}
-
-/// Decrements the expected arrival count of the mbarrier object at the generic address `addr` by
-/// `count`, performs an arrive-on operation with the count `count`, and returns the opaque state
-/// of the mbarrier object prior to the arrive-on operation.
-///
-/// The decrement applies to all subsequent phases of the mbarrier object. The operation must not
-/// cause the mbarrier object to complete its current phase.
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-arrive-drop>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_arrive_drop_nocomplete(addr: *mut u64, count: u32) -> u64 {
-    llvm_mbarrier_arrive_drop_nocomplete(addr.cast(), count)
-}
-
-/// Tests whether the phase of the mbarrier object at the generic address `addr` identified by
-/// `state` has completed.
-///
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-/// `state` must be returned by an arrive operation on the same mbarrier object during the current
-/// or the immediately preceding phase.
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-test-wait-try-wait>
-///
-#[doc = include_str!("../amdgpu/intrinsic_is_convergent.md")]
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_test_wait(addr: *mut u64, state: u64) -> bool {
-    llvm_mbarrier_test_wait(addr.cast(), state)
-}
-
-/// Returns the pending arrival count of the mbarrier object from the opaque `state`.
-///
-/// Requires `sm_80` and PTX ISA 7.0.
-///
-/// `state` must be returned by [`mbarrier_arrive_nocomplete`] or [`mbarrier_arrive_drop_nocomplete`].
-///
-/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-mbarrier-pending-count>
-///
-#[inline]
-#[target_feature(enable = "sm_80,ptx70")]
-#[unstable(feature = "stdarch_nvptx", issue = "111199")]
-pub unsafe fn mbarrier_pending_count(state: u64) -> u32 {
-    llvm_mbarrier_pending_count(state)
-}
-
 /// Controls the execution of dependent grids: either allows dependents to be launched, or waits
 /// for all prerequisite grids to complete.
 ///
@@ -728,4 +588,40 @@ pub unsafe fn clusterlaunchcontrol_query_cancel_get_first_ctaid_y(response: u128
 #[unstable(feature = "stdarch_nvptx", issue = "111199")]
 pub unsafe fn clusterlaunchcontrol_query_cancel_get_first_ctaid_z(response: u128) -> u32 {
     llvm_clusterlaunchcontrol_query_cancel_get_first_ctaid_z(response)
+}
+
+/// Asynchronously attempts to cancel a not yet launched cluster, writing the 16-byte opaque
+/// response to `response` and completing the transaction of the mbarrier object `mbar`.
+///
+/// `response` and `mbar` are generic addresses that must fall within the `.shared::cta` state
+/// space. The response is decoded with [`clusterlaunchcontrol_query_cancel_is_canceled`] and the
+/// other `clusterlaunchcontrol_query_cancel_*` functions.
+///
+/// Requires `sm_100` and PTX ISA 8.6.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-clusterlaunchcontrol-try-cancel>
+///
+#[inline]
+#[target_feature(enable = "sm_100,ptx86")]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub unsafe fn clusterlaunchcontrol_try_cancel_async(response: *mut u128, mbar: *mut u64) {
+    llvm_clusterlaunchcontrol_try_cancel_async(response.cast(), mbar.cast())
+}
+
+/// Asynchronously attempts to cancel a not yet launched cluster, like
+/// [`clusterlaunchcontrol_try_cancel_async`], and multicasts the response to all CTAs of the
+/// cluster (`.multicast::cluster::all`).
+///
+/// `response` and `mbar` are generic addresses that must fall within the `.shared::cta` state
+/// space.
+///
+/// Requires `sm_100a`/`sm_101a`/`sm_120a` with PTX ISA 8.6, or `sm_100f`/`sm_101f`/`sm_120f` with
+/// PTX ISA 8.8, or `sm_100f`/`sm_110f`/`sm_120f` with PTX ISA 9.0.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#parallel-synchronization-and-communication-instructions-clusterlaunchcontrol-try-cancel>
+///
+#[inline]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub unsafe fn clusterlaunchcontrol_try_cancel_async_multicast(response: *mut u128, mbar: *mut u64) {
+    llvm_clusterlaunchcontrol_try_cancel_async_multicast(response.cast(), mbar.cast())
 }
