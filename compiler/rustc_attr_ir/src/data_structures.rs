@@ -1335,6 +1335,14 @@ pub enum AttributeKind {
     /// Represents `#[rustc_lint_untracked_query_information]`
     RustcLintUntrackedQueryInformation,
 
+    /// Represents `#[rustc_llvm_ptr_addrspace(args(...), ret(...))]`
+    RustcLlvmPtrAddrspace {
+        /// Address space of each parameter, `0` meaning unchanged.
+        args: Option<ThinVec<(u32, Span)>>,
+        ret: Option<(u32, Span)>,
+        attr_span: Span,
+    },
+
     /// Represents `#[rustc_macro_transparency]`.
     RustcMacroTransparency(Transparency),
 

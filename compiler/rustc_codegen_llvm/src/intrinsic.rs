@@ -929,20 +929,35 @@ impl<'ll, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
         };
         assert!(!fn_sig.c_variadic());
 
+        // Pointers in other address spaces are declared as such, and autocast from/to generic
+        // pointers below.
+        let (arg_addrspaces, ret_addrspace) = find_attr!(
+            tcx,
+            instance.def_id(),
+            RustcLlvmPtrAddrspace { args, ret, .. } => (args.clone(), *ret)
+        )
+        .unwrap_or_default();
+        let with_addrspace = |llty, addrspace: Option<(u32, Span)>| match addrspace {
+            Some((addrspace, _)) if addrspace != 0 => self.type_ptr_ext(AddressSpace(addrspace)),
+            _ => llty,
+        };
+
         let ret_layout = self.layout_of(fn_sig.output());
         let llreturn_ty = if ret_layout.is_zst() {
             self.type_void()
         } else {
             ret_layout.immediate_llvm_type(self)
         };
+        let decl_return_ty = with_addrspace(llreturn_ty, ret_addrspace);
 
         let mut llargument_tys = Vec::with_capacity(fn_sig.inputs().len());
-        for &arg in fn_sig.inputs() {
+        for (i, &arg) in fn_sig.inputs().iter().enumerate() {
             let arg_layout = self.layout_of(arg);
             if arg_layout.is_zst() {
                 continue;
             }
-            llargument_tys.push(arg_layout.immediate_llvm_type(self));
+            let addrspace = arg_addrspaces.as_ref().and_then(|args| args.get(i).copied());
+            llargument_tys.push(with_addrspace(arg_layout.immediate_llvm_type(self), addrspace));
         }
 
         let fn_ptr = if let Some(&llfn) = self.intrinsic_instances.borrow().get(&instance) {
@@ -953,7 +968,7 @@ impl<'ll, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
             let llfn = if let Some(llfn) = self.get_declared_value(sym) {
                 llfn
             } else {
-                intrinsic_fn(self, sym, llreturn_ty, llargument_tys, instance)
+                intrinsic_fn(self, sym, decl_return_ty, llargument_tys, instance)
             };
 
             self.intrinsic_instances.borrow_mut().insert(instance, llfn);
@@ -1136,6 +1151,10 @@ fn can_autocast<'ll>(cx: &CodegenCx<'ll, '_>, rust_ty: &'ll Type, llvm_ty: &'ll 
             }
         }
         TypeKind::BFloat => rust_ty == cx.type_i16(),
+        // Generic pointers can be cast to pointers in address spaces reachable from the generic one
+        TypeKind::Pointer if rust_ty == cx.type_ptr() => {
+            cx.tcx.sess.target.addr_space_is_generic_castable(cx.pointer_address_space(llvm_ty))
+        }
         TypeKind::X86_AMX if cx.type_kind(rust_ty) == TypeKind::Vector => {
             let element_ty = cx.element_type(rust_ty);
             let element_count = cx.vector_length(rust_ty) as u64;
@@ -1223,6 +1242,7 @@ fn autocast<'ll>(
                 )
             }
         }
+        (TypeKind::Pointer, TypeKind::Pointer) => bx.addrspace_cast(val, dest_ty),
         (TypeKind::Vector, TypeKind::X86_AMX) => {
             bx.call_intrinsic("llvm.x86.cast.vector.to.tile", &[src_ty], &[val])
         }

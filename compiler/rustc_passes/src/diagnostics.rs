@@ -48,6 +48,42 @@ pub(crate) struct NvptxAttrNotKernel {
 }
 
 #[derive(Diagnostic)]
+#[diag("`#[rustc_llvm_ptr_addrspace]` can only be applied to LLVM intrinsics")]
+pub(crate) struct LlvmPtrAddrspaceNotIntrinsic {
+    #[primary_span]
+    pub attr_span: Span,
+}
+
+#[derive(Diagnostic)]
+#[diag(
+    "`#[rustc_llvm_ptr_addrspace]` expected {$expected} argument address spaces, found {$found}"
+)]
+pub(crate) struct LlvmPtrAddrspaceArgCount {
+    #[primary_span]
+    pub attr_span: Span,
+    pub expected: usize,
+    pub found: usize,
+}
+
+#[derive(Diagnostic)]
+#[diag("address space specified for `{$ty}`, which is not a thin raw pointer")]
+pub(crate) struct LlvmPtrAddrspaceNotPointer<'tcx> {
+    #[primary_span]
+    pub span: Span,
+    pub ty: Ty<'tcx>,
+}
+
+#[derive(Diagnostic)]
+#[diag(
+    "pointers in address space {$addrspace} cannot be converted from generic pointers on this target"
+)]
+pub(crate) struct LlvmPtrAddrspaceNotCastable {
+    #[primary_span]
+    pub span: Span,
+    pub addrspace: u32,
+}
+
+#[derive(Diagnostic)]
 #[diag("`#[doc(alias = \"...\")]` isn't allowed on {$location}")]
 pub(crate) struct DocAliasBadLocation<'a> {
     #[primary_span]

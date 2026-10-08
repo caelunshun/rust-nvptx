@@ -974,6 +974,7 @@ unsafe extern "C" {
     pub(crate) fn LLVMScalableVectorType(ElementType: &Type, ElementCount: c_uint) -> &Type;
 
     pub(crate) fn LLVMGetElementType(Ty: &Type) -> &Type;
+    pub(crate) fn LLVMGetPointerAddressSpace(PointerTy: &Type) -> c_uint;
     pub(crate) fn LLVMGetVectorSize(VectorTy: &Type) -> c_uint;
 
     // Operations on other types
@@ -1536,6 +1537,12 @@ unsafe extern "C" {
         Name: *const c_char,
     ) -> &'a Value;
     pub(crate) fn LLVMBuildPointerCast<'a>(
+        B: &Builder<'a>,
+        Val: &'a Value,
+        DestTy: &'a Type,
+        Name: *const c_char,
+    ) -> &'a Value;
+    pub(crate) fn LLVMBuildAddrSpaceCast<'a>(
         B: &Builder<'a>,
         Val: &'a Value,
         DestTy: &'a Type,

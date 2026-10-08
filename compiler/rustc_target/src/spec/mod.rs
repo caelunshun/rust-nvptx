@@ -47,8 +47,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use rustc_abi::{
-    Align, CVariadicStatus, CanonAbi, Endian, ExternAbi, Integer, Size, TargetDataLayout,
-    TargetDataLayoutError,
+    AddressSpace, Align, CVariadicStatus, CanonAbi, Endian, ExternAbi, Integer, Size,
+    TargetDataLayout, TargetDataLayoutError,
 };
 use rustc_data_structures::fx::FxIndexSet;
 use rustc_error_messages::{DiagArgValue, IntoDiagArg, into_diag_arg_using_display};
@@ -3115,5 +3115,17 @@ impl Target {
 
     pub fn vendor_symbol(&self) -> Symbol {
         Symbol::intern(&self.vendor)
+    }
+
+    /// Whether pointers in `addr_space` can be converted to and from pointers in the default
+    /// address space with `addrspacecast`.
+    ///
+    /// Used to pass Rust pointers to LLVM intrinsics expecting pointers in other address spaces.
+    pub fn addr_space_is_generic_castable(&self, addr_space: AddressSpace) -> bool {
+        match self.arch {
+            // global, shared, const, local, shared::cluster
+            Arch::Nvptx64 => matches!(addr_space.0, 1 | 3 | 4 | 5 | 7),
+            _ => false,
+        }
     }
 }

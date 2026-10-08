@@ -183,6 +183,10 @@ impl<'ll, CX: Borrow<SCx<'ll>>> GenericCx<'ll, CX> {
     pub(crate) fn type_bf16(&self) -> &'ll Type {
         unsafe { llvm::LLVMBFloatTypeInContext(self.llcx()) }
     }
+
+    pub(crate) fn pointer_address_space(&self, ty: &'ll Type) -> AddressSpace {
+        AddressSpace(unsafe { llvm::LLVMGetPointerAddressSpace(ty) })
+    }
 }
 
 impl<'ll, CX: Borrow<SCx<'ll>>> BaseTypeCodegenMethods for GenericCx<'ll, CX> {

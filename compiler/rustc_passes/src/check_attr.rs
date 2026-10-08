@@ -6,9 +6,9 @@
 //! item.
 
 use std::cell::Cell;
-use std::slice;
+use std::{iter, slice};
 
-use rustc_abi::ExternAbi;
+use rustc_abi::{AddressSpace, ExternAbi};
 use rustc_ast::MetaItemKind;
 use rustc_attr_ir::diagnostic::Directive;
 use rustc_attr_ir::lang_items::LangItem;
@@ -205,6 +205,8 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
             }
             AttributeKind::Naked(..) => self.check_naked(hir_id, target),
             AttributeKind::Nvptx(_, attr_span) => self.check_nvptx(hir_id, *attr_span, target),
+            AttributeKind::RustcLlvmPtrAddrspace { args, ret, attr_span } => self
+                .check_rustc_llvm_ptr_addrspace(hir_id, args.as_deref(), *ret, *attr_span, target),
             AttributeKind::MayDangle(attr_span) => self.check_may_dangle(hir_id, *attr_span),
             AttributeKind::Doc(attr) => self.check_doc_attrs(attr, hir_id, target),
             AttributeKind::EiiImpl(eii_impl) => self.check_eii_impl(eii_impl),
@@ -775,6 +777,57 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
                     sig_span: fn_sig.span,
                     abi: abi.as_str(),
                 });
+            }
+        }
+    }
+
+    /// Checks that `#[rustc_llvm_ptr_addrspace]` is applied to an LLVM intrinsic and only
+    /// assigns address spaces reachable from generic pointers to thin raw pointers.
+    fn check_rustc_llvm_ptr_addrspace(
+        &self,
+        hir_id: HirId,
+        args: Option<&[(u32, Span)]>,
+        ret: Option<(u32, Span)>,
+        attr_span: Span,
+        target: Target,
+    ) {
+        if target != Target::ForeignFn {
+            // Invalid targets are already diagnosed by target checking.
+            return;
+        }
+        let def_id = hir_id.expect_owner().def_id;
+        if !find_attr!(self.tcx, def_id, LinkName { name, .. } => name.as_str().starts_with("llvm."))
+            .unwrap_or(false)
+        {
+            self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceNotIntrinsic { attr_span });
+            return;
+        }
+
+        let sig = self.tcx.fn_sig(def_id).instantiate_identity().skip_binder();
+        if let Some(args) = args
+            && args.len() != sig.inputs().len()
+        {
+            self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceArgCount {
+                attr_span,
+                expected: sig.inputs().len(),
+                found: args.len(),
+            });
+            return;
+        }
+
+        let typing_env = ty::TypingEnv::non_body_analysis(self.tcx, def_id);
+        let tys = iter::zip(sig.inputs().iter().copied(), args.unwrap_or_default().iter().copied())
+            .chain(ret.map(|ret| (sig.output(), ret)));
+        for (ty, (addrspace, span)) in tys {
+            if addrspace == 0 {
+                continue;
+            }
+            if !matches!(ty.kind(), ty::RawPtr(pointee, _) if pointee.is_sized(self.tcx, typing_env))
+            {
+                self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceNotPointer { span, ty });
+            } else if !self.tcx.sess.target.addr_space_is_generic_castable(AddressSpace(addrspace))
+            {
+                self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceNotCastable { span, addrspace });
             }
         }
     }

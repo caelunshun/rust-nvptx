@@ -343,6 +343,8 @@ pub static BUILTIN_ATTRIBUTES: &[Symbol] = &[
 
     sym::rustc_simd_monomorphize_lane_limit,
     sym::rustc_nonnull_optimization_guaranteed,
+    // Address spaces of pointer parameters/return of an LLVM intrinsic declaration.
+    sym::rustc_llvm_ptr_addrspace,
 
     // ==========================================================================
     // Internal attributes, Misc:

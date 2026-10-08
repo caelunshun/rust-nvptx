@@ -213,6 +213,78 @@ impl SingleAttributeParser for RustcLegacyConstGenericsParser {
     }
 }
 
+pub(crate) struct RustcLlvmPtrAddrspaceParser;
+
+impl SingleAttributeParser for RustcLlvmPtrAddrspaceParser {
+    const PATH: &[Symbol] = &[sym::rustc_llvm_ptr_addrspace];
+    const ALLOWED_TARGETS: AllowedTargets<'_> =
+        AllowedTargets::AllowList(&[Allow(Target::ForeignFn)]);
+    const TEMPLATE: AttributeTemplate = template!(List: &["args(N, ...), ret(N)"]);
+    const STABILITY: AttributeStability = unstable!(rustc_attrs);
+
+    fn convert(cx: &mut AcceptContext<'_, '_>, args: &ArgParser) -> Option<AttributeKind> {
+        let list = cx.expect_list(args, cx.attr_span)?;
+        if list.is_empty() {
+            cx.adcx().expected_at_least_one_argument(list.span);
+            return None;
+        }
+
+        let mut arg_addrspaces = None;
+        let mut ret_addrspace = None;
+        for item in list.mixed() {
+            let Some(meta_item) = item.meta_item() else {
+                cx.adcx().expected_not_literal(item.span());
+                return None;
+            };
+            let Some(ident) = meta_item.ident() else {
+                cx.adcx()
+                    .expected_specific_argument(meta_item.path().span(), &[sym::args, sym::ret]);
+                return None;
+            };
+            let addrspaces = cx.expect_list(meta_item.args(), meta_item.span())?;
+            let mut parsed = ThinVec::new();
+            for addrspace in addrspaces.mixed() {
+                if let MetaItemOrLitParser::Lit(MetaItemLit {
+                    kind: LitKind::Int(val, LitIntType::Unsuffixed),
+                    ..
+                }) = addrspace
+                    && let Ok(val) = u32::try_from(val.get())
+                {
+                    parsed.push((val, addrspace.span()));
+                } else {
+                    cx.adcx().expected_integer_literal(addrspace.span());
+                    return None;
+                }
+            }
+
+            let duplicate = match ident.name {
+                sym::args => arg_addrspaces.replace(parsed).is_some(),
+                sym::ret => {
+                    let [addrspace] = parsed[..] else {
+                        cx.adcx().expected_single_argument(addrspaces.span, parsed.len());
+                        return None;
+                    };
+                    ret_addrspace.replace(addrspace).is_some()
+                }
+                _ => {
+                    cx.adcx().expected_specific_argument(ident.span, &[sym::args, sym::ret]);
+                    return None;
+                }
+            };
+            if duplicate {
+                cx.adcx().duplicate_key(ident.span, ident.name);
+                return None;
+            }
+        }
+
+        Some(AttributeKind::RustcLlvmPtrAddrspace {
+            args: arg_addrspaces,
+            ret: ret_addrspace,
+            attr_span: cx.attr_span,
+        })
+    }
+}
+
 pub(crate) struct RustcInheritOverflowChecksParser;
 
 impl NoArgsAttributeParser for RustcInheritOverflowChecksParser {

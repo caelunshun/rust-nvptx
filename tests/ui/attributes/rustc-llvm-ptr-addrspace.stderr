@@ -1,0 +1,109 @@
+error[E0805]: malformed `rustc_llvm_ptr_addrspace` attribute input
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:41:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace(ret(3, 1))]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^------^
+   |                                   |
+   |                                   expected a single argument here
+   |
+help: must be of the form
+   |
+LL -     #[rustc_llvm_ptr_addrspace(ret(3, 1))]
+LL +     #[rustc_llvm_ptr_addrspace(args(N, ...), ret(N))]
+   |
+
+error[E0538]: malformed `rustc_llvm_ptr_addrspace` attribute input
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:46:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1, 0), args(1, 0))]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+   |                                            |
+   |                                            found `args` used as a key more than once
+   |
+help: must be of the form
+   |
+LL -     #[rustc_llvm_ptr_addrspace(args(1, 0), args(1, 0))]
+LL +     #[rustc_llvm_ptr_addrspace(args(N, ...), ret(N))]
+   |
+
+error[E0539]: malformed `rustc_llvm_ptr_addrspace` attribute input
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:51:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace(params(1, 0))]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^------^^^^^^^
+   |                                |
+   |                                valid arguments are `args` or `ret`
+   |
+help: must be of the form
+   |
+LL -     #[rustc_llvm_ptr_addrspace(params(1, 0))]
+LL +     #[rustc_llvm_ptr_addrspace(args(N, ...), ret(N))]
+   |
+
+error[E0539]: malformed `rustc_llvm_ptr_addrspace` attribute input
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:56:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(global, 0))]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^------^^^^^
+   |                                     |
+   |                                     expected an integer literal here
+   |
+help: must be of the form
+   |
+LL -     #[rustc_llvm_ptr_addrspace(args(global, 0))]
+LL +     #[rustc_llvm_ptr_addrspace(args(N, ...), ret(N))]
+   |
+
+error[E0539]: malformed `rustc_llvm_ptr_addrspace` attribute input
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:61:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^ expected this to be a list
+   |
+help: must be of the form
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(N, ...), ret(N))]
+   |                               ++++++++++++++++++++++
+
+error: the `rustc_llvm_ptr_addrspace` attribute cannot be used on functions
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:72:3
+   |
+LL | #[rustc_llvm_ptr_addrspace(args(1))]
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: the `rustc_llvm_ptr_addrspace` attribute can only be applied to foreign functions
+
+error: `#[rustc_llvm_ptr_addrspace]` expected 2 argument address spaces, found 1
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:21:5
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1))]
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: address space specified for `i32`, which is not a thin raw pointer
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:26:40
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1, 1))]
+   |                                        ^
+
+error: address space specified for `*const [i32]`, which is not a thin raw pointer
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:31:37
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1, 0))]
+   |                                     ^
+
+error: pointers in address space 6 cannot be converted from generic pointers on this target
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:36:37
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(6, 0))]
+   |                                     ^
+
+error: `#[rustc_llvm_ptr_addrspace]` can only be applied to LLVM intrinsics
+  --> $DIR/rustc-llvm-ptr-addrspace.rs:67:5
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1))]
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 11 previous errors
+
+Some errors have detailed explanations: E0538, E0539, E0805.
+For more information about an error, try `rustc --explain E0538`.

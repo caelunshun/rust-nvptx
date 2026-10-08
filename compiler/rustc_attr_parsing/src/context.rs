@@ -246,6 +246,7 @@ attribute_parsers!(
         Single<RustcIfThisChangedParser>,
         Single<RustcLegacyConstGenericsParser>,
         Single<RustcLintOptDenyFieldAccessParser>,
+        Single<RustcLlvmPtrAddrspaceParser>,
         Single<RustcMacroTransparencyParser>,
         Single<RustcMustImplementOneOfParser>,
         Single<RustcObjcClassParser>,

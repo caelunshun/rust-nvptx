@@ -1588,6 +1588,10 @@ impl<'a, 'll, 'tcx> Builder<'a, 'll, 'tcx> {
         unsafe { llvm::LLVMGetBasicBlockParent(self.llbb()) }
     }
 
+    pub(crate) fn addrspace_cast(&mut self, val: &'ll Value, dest_ty: &'ll Type) -> &'ll Value {
+        unsafe { llvm::LLVMBuildAddrSpaceCast(self.llbuilder, val, dest_ty, UNNAMED) }
+    }
+
     fn generate_ubsan_cfi_diag_data(
         &mut self,
         span: rustc_span::Span,

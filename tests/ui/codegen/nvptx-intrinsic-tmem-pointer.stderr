@@ -1,0 +1,8 @@
+error: intrinsic signature mismatch for `llvm.nvvm.tcgen05.dealloc.cg1`: expected signature `void (ptr addrspace(6), i32)`, found `void (ptr, i32)`
+  --> $DIR/nvptx-intrinsic-tmem-pointer.rs:17:5
+   |
+LL |     fn tcgen05_dealloc(tmem_addr: *mut u8, ncols: u32);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error
+

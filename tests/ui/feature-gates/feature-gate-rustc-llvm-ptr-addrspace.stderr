@@ -1,0 +1,12 @@
+error[E0658]: use of an internal attribute
+  --> $DIR/feature-gate-rustc-llvm-ptr-addrspace.rs:14:7
+   |
+LL |     #[rustc_llvm_ptr_addrspace(args(1, 0))]
+   |       ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: add `#![feature(rustc_attrs)]` to the crate attributes to enable
+   = note: the `rustc_llvm_ptr_addrspace` attribute is an internal implementation detail that will never be stable
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0658`.
