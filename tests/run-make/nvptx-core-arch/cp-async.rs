@@ -12,10 +12,10 @@ use core::arch::nvptx::*;
 use core::ffi::c_void;
 
 // CHECK-LABEL: .entry async_bulk_g2s_cluster(
-// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}];
-// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.multicast::cluster [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}], {{%rs[0-9]+}};
-// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.L2::cache_hint [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.multicast::cluster.L2::cache_hint [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}], {{%rs[0-9]+}}, {{%rd[0-9]+}};
+// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}];
+// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.multicast::cluster [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}], {{%rs[0-9]+}};
+// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.L2::cache_hint [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: cp.async.bulk.shared::cluster.global.mbarrier::complete_tx::bytes.multicast::cluster.L2::cache_hint [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}], {{%rs[0-9]+}}, {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_bulk_g2s_cluster(
     p: *const *mut c_void,
@@ -59,8 +59,8 @@ pub unsafe extern "ptx-kernel" fn async_bulk_g2s_cluster(
 }
 
 // CHECK-LABEL: .entry async_bulk_g2s_cta(
-// CHECK: cp.async.bulk.shared::cta.global.mbarrier::complete_tx::bytes [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}];
-// CHECK: cp.async.bulk.shared::cta.global.mbarrier::complete_tx::bytes.L2::cache_hint [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: cp.async.bulk.shared::cta.global.mbarrier::complete_tx::bytes [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}];
+// CHECK: cp.async.bulk.shared::cta.global.mbarrier::complete_tx::bytes.L2::cache_hint [{{%r[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_bulk_g2s_cta(p: *const *mut c_void, policy: u64) {
     unsafe {
@@ -94,7 +94,7 @@ pub unsafe extern "ptx-kernel" fn async_bulk_prefetch_l2(p: *const *const c_void
 }
 
 // CHECK-LABEL: .entry async_bulk_shared_cta_to_cluster(
-// CHECK: cp.async.bulk.shared::cluster.shared::cta.mbarrier::complete_tx::bytes [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, [{{%rd[0-9]+}}];
+// CHECK: cp.async.bulk.shared::cluster.shared::cta.mbarrier::complete_tx::bytes [{{%r[0-9]+}}], [{{%r[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_bulk_shared_cta_to_cluster(p: *const *mut c_void) {
     unsafe {
@@ -103,8 +103,8 @@ pub unsafe extern "ptx-kernel" fn async_bulk_shared_cta_to_cluster(p: *const *mu
 }
 
 // CHECK-LABEL: .entry async_bulk_shared_cta_to_global(
-// CHECK: cp.async.bulk.global.shared::cta.bulk_group [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: cp.async.bulk.global.shared::cta.bulk_group.L2::cache_hint [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%rd[0-9]+}};
+// CHECK: cp.async.bulk.global.shared::cta.bulk_group [{{%rd[0-9]+}}], [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: cp.async.bulk.global.shared::cta.bulk_group.L2::cache_hint [{{%rd[0-9]+}}], [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_bulk_shared_cta_to_global(
     p: *const *mut c_void,
@@ -118,9 +118,9 @@ pub unsafe extern "ptx-kernel" fn async_bulk_shared_cta_to_global(
 
 // The pointers are loaded from memory so that LLVM can't infer their address spaces.
 // CHECK-LABEL: .entry async_ca(
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 4;
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 8;
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 16;
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 4;
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 8;
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 16;
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_ca(p: *const *mut c_void) {
     unsafe {
@@ -131,9 +131,9 @@ pub unsafe extern "ptx-kernel" fn async_ca(p: *const *mut c_void) {
 }
 
 // CHECK-LABEL: .entry async_ca_src_size(
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 4, {{%r[0-9]+}};
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 8, {{%r[0-9]+}};
-// CHECK: cp.async.ca.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 16, {{%r[0-9]+}};
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 4, {{%r[0-9]+}};
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 8, {{%r[0-9]+}};
+// CHECK: cp.async.ca.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 16, {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_ca_src_size(p: *const *mut c_void, size: u32) {
     unsafe {
@@ -144,8 +144,8 @@ pub unsafe extern "ptx-kernel" fn async_ca_src_size(p: *const *mut c_void, size:
 }
 
 // CHECK-LABEL: .entry async_cg(
-// CHECK: cp.async.cg.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 16;
-// CHECK: cp.async.cg.shared.global [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], 16, {{%r[0-9]+}};
+// CHECK: cp.async.cg.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 16;
+// CHECK: cp.async.cg.shared.global [{{%r[0-9]+}}], [{{%rd[0-9]+}}], 16, {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_cg(p: *const *mut c_void, size: u32) {
     unsafe {
@@ -172,8 +172,8 @@ pub unsafe extern "ptx-kernel" fn async_groups() {
 // CHECK-LABEL: .entry async_mbarrier_arrive(
 // CHECK: cp.async.mbarrier.arrive.b64 [{{%rd[0-9]+}}];
 // CHECK: cp.async.mbarrier.arrive.noinc.b64 [{{%rd[0-9]+}}];
-// CHECK: cp.async.mbarrier.arrive.shared.b64 [{{%rd[0-9]+}}];
-// CHECK: cp.async.mbarrier.arrive.noinc.shared.b64 [{{%rd[0-9]+}}];
+// CHECK: cp.async.mbarrier.arrive.shared.b64 [{{%r[0-9]+}}];
+// CHECK: cp.async.mbarrier.arrive.noinc.shared.b64 [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_mbarrier_arrive(p: *const *mut c_void) {
     unsafe {

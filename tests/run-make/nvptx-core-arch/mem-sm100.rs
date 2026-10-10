@@ -20,7 +20,7 @@ pub unsafe extern "ptx-kernel" fn mem_st_bulk(p: *const *mut c_void) {
 }
 
 // CHECK-LABEL: .entry mem_st_bulk_shared(
-// CHECK: st.bulk.shared::cta [{{%rd[0-9]+}}], {{%rd[0-9]+}}, 0;
+// CHECK: st.bulk.shared::cta [{{%r[0-9]+}}], {{%rd[0-9]+}}, 0;
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn mem_st_bulk_shared(p: *const *mut c_void) {
     unsafe { st_bulk::<{ StateSpace::SharedCta }>(*p, 64) }

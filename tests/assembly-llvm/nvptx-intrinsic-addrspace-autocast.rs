@@ -23,7 +23,8 @@ unsafe extern "llvm-intrinsic" {
 }
 
 // CHECK-LABEL: .visible .func cp_async(
-// CHECK-DAG: cvta.to.shared.u64 [[DST:%rd[0-9]+]],
+// CHECK-DAG: cvta.to.shared.u64 [[DST64:%rd[0-9]+]],
+// CHECK-DAG: cvt.u32.u64 [[DST:%r[0-9]+]], [[DST64]];
 // CHECK-DAG: cvta.to.global.u64 [[SRC:%rd[0-9]+]],
 // CHECK: cp.async.ca.shared.global [[[DST]]], [[[SRC]]], 4;
 #[no_mangle]
@@ -33,7 +34,7 @@ pub unsafe fn cp_async(dst: *mut u8, src: *const u8) {
 
 // CHECK-LABEL: .visible .func (.param .b64 func_retval0) mapa(
 // CHECK: cvta.to.shared.u64
-// CHECK: mapa.shared::cluster.u64
+// CHECK: mapa.shared::cluster.u32
 // CHECK: cvta.shared::cluster.u64
 #[no_mangle]
 pub unsafe fn mapa(p: *mut u8, rank: u32) -> *mut u8 {

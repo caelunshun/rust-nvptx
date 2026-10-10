@@ -3,6 +3,15 @@ pub enum Target {
     Nvptx64NvidiaCuda,
 }
 
+impl Target {
+    /// Options passed to `opt` and `llc`, matching the target's `llvm_args` in rustc.
+    pub fn llvm_args(self) -> &'static [&'static str] {
+        match self {
+            Target::Nvptx64NvidiaCuda => &["--nvptx-short-ptr"],
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, thiserror::Error)]
 /// The target is not supported by this linker
 #[error("unsupported target")]

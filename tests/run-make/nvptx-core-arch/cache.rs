@@ -102,8 +102,8 @@ pub unsafe extern "ptx-kernel" fn cache_prefetch_l2_evict(p: *const *const c_voi
 }
 
 // CHECK-LABEL: .entry cache_prefetch_local(
-// CHECK: prefetch.local.L1 [{{%rd[0-9]+}}];
-// CHECK: prefetch.local.L2 [{{%rd[0-9]+}}];
+// CHECK: prefetch.local.L1 [{{%r[0-9]+}}];
+// CHECK: prefetch.local.L2 [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn cache_prefetch_local(p: *const *const c_void) {
     unsafe {

@@ -6,6 +6,7 @@ use crate::Optimization;
 
 #[derive(Debug)]
 pub struct Session {
+    target: crate::Target,
     cpu: Option<String>,
     feature: Option<String>,
     symbols: Vec<String>,
@@ -34,6 +35,7 @@ impl Session {
         tracing::debug!(%target, ?cpu, ?feature, ?out_path, "new session created");
 
         Session {
+            target,
             cpu,
             feature,
             symbols: Vec::new(),
@@ -102,7 +104,8 @@ impl Session {
             .arg("-o")
             .arg(&self.opt_path)
             .arg(format!("--internalize-public-api-file={}", self.sym_path.display()))
-            .arg(format!("--passes={}", passes));
+            .arg(format!("--passes={}", passes))
+            .args(self.target.llvm_args());
 
         if !debug {
             opt_cmd.arg("--strip-debug");
@@ -140,6 +143,7 @@ impl Session {
         }
 
         let lcc_output = lcc_command
+            .args(self.target.llvm_args())
             .arg(&self.opt_path)
             .arg("-o").arg(&self.out_path)
             .output()

@@ -13,7 +13,7 @@ use core::arch::nvptx::*;
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive(
 // CHECK: mbarrier.arrive.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}];
-// CHECK: mbarrier.arrive.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}];
+// CHECK: mbarrier.arrive.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive(bar: *const *mut u64, out: *mut u64) {
     unsafe {
@@ -24,7 +24,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive(bar: *const *mut u64, o
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop(
 // CHECK: mbarrier.arrive_drop.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}];
-// CHECK: mbarrier.arrive_drop.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}];
+// CHECK: mbarrier.arrive_drop.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop(bar: *const *mut u64, out: *mut u64) {
     unsafe {
@@ -34,10 +34,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop(bar: *const *mut u
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop_expect_tx(
-// CHECK: mbarrier.arrive_drop.expect_tx.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_expect_tx(
     bar: *const *mut u64,
@@ -57,10 +57,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_expect_tx(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop_expect_tx_cluster(
-// CHECK: mbarrier.arrive_drop.expect_tx.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.release.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cta.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.release.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cta.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.expect_tx.relaxed.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_expect_tx_cluster(
     bar: *const *mut u64,
@@ -81,7 +81,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_expect_tx_cluster(
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop_nocomplete(
 // CHECK: mbarrier.arrive_drop.noComplete.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.noComplete.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.noComplete.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_nocomplete(
     bar: *const *mut u64,
@@ -95,10 +95,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_nocomplete(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop_scoped(
-// CHECK: mbarrier.arrive_drop.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_scoped(
     bar: *const *mut u64,
@@ -118,10 +118,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_scoped(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_drop_scoped_cluster(
-// CHECK: mbarrier.arrive_drop.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.release.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.relaxed.cta.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive_drop.relaxed.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.release.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.relaxed.cta.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive_drop.relaxed.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_scoped_cluster(
     bar: *const *mut u64,
@@ -141,10 +141,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_drop_scoped_cluster(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_expect_tx(
-// CHECK: mbarrier.arrive.expect_tx.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_expect_tx(
     bar: *const *mut u64,
@@ -163,10 +163,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_expect_tx(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_expect_tx_cluster(
-// CHECK: mbarrier.arrive.expect_tx.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.release.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.relaxed.cta.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.expect_tx.relaxed.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.release.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.relaxed.cta.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.expect_tx.relaxed.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_expect_tx_cluster(
     bar: *const *mut u64,
@@ -183,7 +183,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_expect_tx_cluster(
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_nocomplete(
 // CHECK: mbarrier.arrive.noComplete.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.noComplete.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.noComplete.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_nocomplete(
     bar: *const *mut u64,
@@ -197,10 +197,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_nocomplete(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_scoped(
-// CHECK: mbarrier.arrive.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.release.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.relaxed.cta.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.relaxed.cluster.shared.b64 {{%rd[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_scoped(
     bar: *const *mut u64,
@@ -219,10 +219,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_scoped(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_arrive_scoped_cluster(
-// CHECK: mbarrier.arrive.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.release.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.relaxed.cta.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.arrive.relaxed.cluster.shared::cluster.b64 _, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.release.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.relaxed.cta.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.arrive.relaxed.cluster.shared::cluster.b64 _, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_scoped_cluster(
     bar: *const *mut u64,
@@ -238,10 +238,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_arrive_scoped_cluster(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_complete_tx(
-// CHECK: mbarrier.complete_tx.relaxed.cta.shared.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.complete_tx.relaxed.cluster.shared.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.complete_tx.relaxed.cta.shared::cluster.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.complete_tx.relaxed.cluster.shared::cluster.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.complete_tx.relaxed.cta.shared.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.complete_tx.relaxed.cluster.shared.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.complete_tx.relaxed.cta.shared::cluster.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.complete_tx.relaxed.cluster.shared::cluster.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_complete_tx(bar: *const *mut u64, tx: u32) {
     unsafe {
@@ -254,10 +254,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_complete_tx(bar: *const *mut u
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_expect_tx(
-// CHECK: mbarrier.expect_tx.relaxed.cta.shared.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.expect_tx.relaxed.cluster.shared.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.expect_tx.relaxed.cta.shared::cluster.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.expect_tx.relaxed.cluster.shared::cluster.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.expect_tx.relaxed.cta.shared.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.expect_tx.relaxed.cluster.shared.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.expect_tx.relaxed.cta.shared::cluster.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.expect_tx.relaxed.cluster.shared::cluster.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_expect_tx(bar: *const *mut u64, tx: u32) {
     unsafe {
@@ -271,7 +271,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_expect_tx(bar: *const *mut u64
 
 // CHECK-LABEL: .entry kernel_mbarrier_init(
 // CHECK: mbarrier.init.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.init.shared.b64 [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.init.shared.b64 [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_init(bar: *const *mut u64, count: u32) {
     unsafe {
@@ -282,7 +282,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_init(bar: *const *mut u64, cou
 
 // CHECK-LABEL: .entry kernel_mbarrier_inval(
 // CHECK: mbarrier.inval.b64 [{{%rd[0-9]+}}];
-// CHECK: mbarrier.inval.shared.b64 [{{%rd[0-9]+}}];
+// CHECK: mbarrier.inval.shared.b64 [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_inval(bar: *const *mut u64) {
     unsafe {
@@ -300,7 +300,7 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_pending_count(state: u64, out:
 
 // CHECK-LABEL: .entry kernel_mbarrier_test_wait(
 // CHECK: mbarrier.test_wait.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.test_wait.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.test_wait.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait(
     bar: *const *mut u64,
@@ -314,10 +314,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_test_wait_parity(
-// CHECK: mbarrier.test_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.test_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.test_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.test_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.test_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.test_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.test_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.test_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait_parity(
     bar: *const *mut u64,
@@ -340,10 +340,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait_parity(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_test_wait_scoped(
-// CHECK: mbarrier.test_wait.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.test_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.test_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.test_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.test_wait.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.test_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.test_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.test_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait_scoped(
     bar: *const *mut u64,
@@ -366,10 +366,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_test_wait_scoped(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_try_wait_parity(
-// CHECK: mbarrier.try_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_parity(
     bar: *const *mut u64,
@@ -392,10 +392,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_parity(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_try_wait_parity_tl(
-// CHECK: mbarrier.try_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.parity.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_parity_tl(
     bar: *const *mut u64,
@@ -421,10 +421,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_parity_tl(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_try_wait_scoped(
-// CHECK: mbarrier.try_wait.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.try_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.try_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
-// CHECK: mbarrier.try_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.try_wait.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.try_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.try_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
+// CHECK: mbarrier.try_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_scoped(
     bar: *const *mut u64,
@@ -447,10 +447,10 @@ pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_scoped(
 }
 
 // CHECK-LABEL: .entry kernel_mbarrier_try_wait_scoped_tl(
-// CHECK: mbarrier.try_wait.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
-// CHECK: mbarrier.try_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%rd[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.acquire.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.relaxed.cta.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
+// CHECK: mbarrier.try_wait.relaxed.cluster.shared.b64 {{%p[0-9]+}}, [{{%r[0-9]+}}], {{%rd[0-9]+}}, {{%r[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn kernel_mbarrier_try_wait_scoped_tl(
     bar: *const *mut u64,

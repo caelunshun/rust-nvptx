@@ -61,6 +61,21 @@ unsafe extern "llvm-intrinsic" {
     #[link_name = "llvm.nvvm.st.async.mmio.sys.i64"]
     #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(1, 0)))]
     fn llvm_st_async_mmio_sys_i64(p: *mut c_void, value: u64);
+    #[link_name = "llvm.strip.invariant.group.p1"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(1), ret(1)))]
+    fn llvm_strip_invariant_group_global(p: *mut c_void) -> *mut c_void;
+    #[link_name = "llvm.strip.invariant.group.p3"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(3), ret(3)))]
+    fn llvm_strip_invariant_group_shared(p: *mut c_void) -> *mut c_void;
+    #[link_name = "llvm.strip.invariant.group.p4"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(4), ret(4)))]
+    fn llvm_strip_invariant_group_const(p: *mut c_void) -> *mut c_void;
+    #[link_name = "llvm.strip.invariant.group.p5"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(5), ret(5)))]
+    fn llvm_strip_invariant_group_local(p: *mut c_void) -> *mut c_void;
+    #[link_name = "llvm.strip.invariant.group.p7"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(7), ret(7)))]
+    fn llvm_strip_invariant_group_shared_cluster(p: *mut c_void) -> *mut c_void;
 }
 
 /// A PTX state space.
@@ -108,6 +123,45 @@ pub unsafe fn isspacep<const SPACE: StateSpace>(ptr: *const c_void) -> bool {
         StateSpace::SharedCta => llvm_isspacep_shared(ptr),
         StateSpace::SharedCluster => llvm_isspacep_shared_cluster(ptr),
     }
+}
+
+/// Converts the generic address `ptr` to state space `SPACE` and back (`cvta.to.<space>` followed
+/// by `cvta.<space>`), returning a generic pointer to the same location.
+///
+/// This tells the compiler that the returned pointer, and pointers derived from it, point into
+/// `SPACE`. Accesses through them can then use state space-specific instructions (e.g.
+/// `ld.shared` rather than `ld`) and, for state spaces with 32-bit addresses (shared, const and
+/// local), 32-bit address arithmetic. The conversions are usually optimized away, except for a
+/// single `cvta.to.<space>` of `ptr`.
+///
+/// [`StateSpace::Generic`] is not supported. [`StateSpace::SharedCluster`] requires `sm_90` and
+/// PTX ISA 7.8.
+///
+/// # Safety
+///
+/// `ptr` must fall within the window of state space `SPACE`.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-cvta>
+#[inline]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub unsafe fn cvta<const SPACE: StateSpace, T>(ptr: *mut T) -> *mut T {
+    static_assert!(
+        !matches!(SPACE, StateSpace::Generic),
+        "cvta doesn't support the generic state space"
+    );
+    // `llvm.strip.invariant.group` is an identity function here, since Rust doesn't use
+    // `!invariant.group` metadata. It keeps LLVM from folding the pair of address space casts
+    // inserted around it, so that LLVM's address space inference can see the inner one.
+    let ptr = ptr.cast();
+    match SPACE {
+        StateSpace::Generic => unreachable!(),
+        StateSpace::Const => llvm_strip_invariant_group_const(ptr),
+        StateSpace::Global => llvm_strip_invariant_group_global(ptr),
+        StateSpace::Local => llvm_strip_invariant_group_local(ptr),
+        StateSpace::SharedCta => llvm_strip_invariant_group_shared(ptr),
+        StateSpace::SharedCluster => llvm_strip_invariant_group_shared_cluster(ptr),
+    }
+    .cast()
 }
 
 /// Maps the address `ptr` of a shared memory location in the executing CTA to the generic address

@@ -6,7 +6,9 @@ use crate::spec::{
 pub(crate) fn target() -> Target {
     Target {
         arch: Arch::Nvptx64,
-        data_layout: "e-p6:32:32-i64:64-i128:128-i256:256-v16:16-v32:32-n16:32:64".into(),
+        // 32-bit pointers in the shared, const and local address spaces, matching LLVM's
+        // `--nvptx-short-ptr` (set in `llvm_args` below).
+        data_layout: "e-p3:32:32-p4:32:32-p5:32:32-p6:32:32-p7:32:32-i64:64-i128:128-i256:256-v16:16-v32:32-n16:32:64".into(),
         llvm_target: "nvptx64-nvidia-cuda".into(),
         metadata: TargetMetadata {
             description: Some("--emit=asm generates PTX code that runs on NVIDIA GPUs".into()),
@@ -31,6 +33,8 @@ pub(crate) fn target() -> Target {
 
             // crates with different `target-cpu`s are not link-compatible for NVPTX
             requires_consistent_cpu: true,
+
+            llvm_args: cvs!["--nvptx-short-ptr"],
 
             // FIXME: create tests for the atomics.
             max_atomic_width: Some(64),

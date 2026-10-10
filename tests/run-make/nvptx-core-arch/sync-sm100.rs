@@ -41,7 +41,7 @@ pub unsafe extern "ptx-kernel" fn sync_clusterlaunchcontrol_query_cancel_is_canc
 }
 
 // CHECK-LABEL: .entry sync_clusterlaunchcontrol_try_cancel_async(
-// CHECK: clusterlaunchcontrol.try_cancel.async.shared::cta.mbarrier::complete_tx::bytes.b128 [{{%rd[0-9]+}}], [{{%rd[0-9]+}}];
+// CHECK: clusterlaunchcontrol.try_cancel.async.shared::cta.mbarrier::complete_tx::bytes.b128 [{{%r[0-9]+}}], [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn sync_clusterlaunchcontrol_try_cancel_async(
     response: *const *mut u128,
@@ -51,7 +51,7 @@ pub unsafe extern "ptx-kernel" fn sync_clusterlaunchcontrol_try_cancel_async(
 }
 
 // CHECK-LABEL: .entry sync_clusterlaunchcontrol_try_cancel_async_multicast(
-// CHECK: clusterlaunchcontrol.try_cancel.async.shared::cta.mbarrier::complete_tx::bytes.multicast::cluster::all.b128 [{{%rd[0-9]+}}], [{{%rd[0-9]+}}];
+// CHECK: clusterlaunchcontrol.try_cancel.async.shared::cta.mbarrier::complete_tx::bytes.multicast::cluster::all.b128 [{{%r[0-9]+}}], [{{%r[0-9]+}}];
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn sync_clusterlaunchcontrol_try_cancel_async_multicast(
     response: *const *mut u128,

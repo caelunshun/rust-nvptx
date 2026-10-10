@@ -21,12 +21,7 @@ impl Copy for Params {}
 
 // CHECK: define ptx_kernel void @kernel(ptr byval([32 x i8]) align 8 "nvvm.grid_constant" %p, ptr %out, ptr align 4 %q)
 #[no_mangle]
-pub extern "ptx-kernel" fn kernel(
-    #[nvptx(grid_constant)] p: &Params,
-    out: *mut f32,
-    q: &u32,
-) {
-}
+pub extern "ptx-kernel" fn kernel(#[nvptx(grid_constant)] p: &Params, out: *mut f32, q: &u32) {}
 
 // CHECK: define ptx_kernel void @scalar(i32 %x, ptr byval([2 x i8]) align 2 "nvvm.grid_constant" %y)
 #[no_mangle]

@@ -12,8 +12,8 @@ use core::arch::nvptx::*;
 use core::ffi::c_void;
 
 // CHECK-LABEL: .entry async_bulk_shared_cta_to_global_bytemask(
-// CHECK: cp.async.bulk.global.shared::cta.bulk_group.cp_mask [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%rs[0-9]+}};
-// CHECK: cp.async.bulk.global.shared::cta.bulk_group.L2::cache_hint.cp_mask [{{%rd[0-9]+}}], [{{%rd[0-9]+}}], {{%r[0-9]+}}, {{%rd[0-9]+}}, {{%rs[0-9]+}};
+// CHECK: cp.async.bulk.global.shared::cta.bulk_group.cp_mask [{{%rd[0-9]+}}], [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%rs[0-9]+}};
+// CHECK: cp.async.bulk.global.shared::cta.bulk_group.L2::cache_hint.cp_mask [{{%rd[0-9]+}}], [{{%r[0-9]+}}], {{%r[0-9]+}}, {{%rd[0-9]+}}, {{%rs[0-9]+}};
 #[unsafe(no_mangle)]
 pub unsafe extern "ptx-kernel" fn async_bulk_shared_cta_to_global_bytemask(
     p: *const *mut c_void,
