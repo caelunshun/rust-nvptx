@@ -24,6 +24,12 @@ unsafe extern "llvm-intrinsic" {
     #[link_name = "llvm.nvvm.ldu.global.p.p3.p1"]
     #[rustc_llvm_ptr_addrspace(args(1, 0), ret(3))]
     fn ldu_global_shared_ptr(p: *const *mut u8, align: i32) -> *mut u8;
+    #[link_name = "llvm.nvvm.ldu.global.p.p3.p1"]
+    #[rustc_llvm_ptr_addrspace(args(1, 0), ret(3))]
+    fn ldu_global_shared_int(p: *const u32, align: i32) -> u32;
+    #[link_name = "llvm.nvvm.mapa.shared.cluster"]
+    #[rustc_llvm_ptr_addrspace(args(3, 0), ret(7))]
+    fn mapa_shared_cluster_int(p: u32, rank: u32) -> u32;
 }
 
 // CHECK-LABEL: @non_overloaded_args
@@ -68,6 +74,24 @@ pub unsafe fn overloaded_ret(p: *const *mut u8) -> *mut u8 {
     // CHECK: [[R:%[0-9]+]] = call ptr addrspace(3) @llvm.nvvm.ldu.global.p.p3.p1(ptr addrspace(1) [[P]], i32 8)
     // CHECK: addrspacecast ptr addrspace(3) [[R]] to ptr
     ldu_global_shared_ptr(p, 8)
+}
+
+// CHECK-LABEL: @non_overloaded_int
+#[no_mangle]
+pub unsafe fn non_overloaded_int(p: u32, rank: u32) -> u32 {
+    // CHECK: [[P:%[0-9]+]] = inttoptr i32 %p to ptr addrspace(3)
+    // CHECK: [[R:%[0-9]+]] = call ptr addrspace(7) @llvm.nvvm.mapa.shared.cluster(ptr addrspace(3) [[P]], i32 %rank)
+    // CHECK: ptrtoint ptr addrspace(7) [[R]] to i32
+    mapa_shared_cluster_int(p, rank)
+}
+
+// CHECK-LABEL: @overloaded_int_ret
+#[no_mangle]
+pub unsafe fn overloaded_int_ret(p: *const u32) -> u32 {
+    // CHECK: [[P:%[0-9]+]] = addrspacecast ptr %p to ptr addrspace(1)
+    // CHECK: [[R:%[0-9]+]] = call ptr addrspace(3) @llvm.nvvm.ldu.global.p.p3.p1(ptr addrspace(1) [[P]], i32 4)
+    // CHECK: ptrtoint ptr addrspace(3) [[R]] to i32
+    ldu_global_shared_int(p, 4)
 }
 
 // CHECK: declare void @llvm.nvvm.cp.async.ca.shared.global.4(ptr addrspace(3){{.*}}, ptr addrspace(1){{.*}})

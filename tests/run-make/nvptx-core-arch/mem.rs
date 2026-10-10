@@ -146,6 +146,36 @@ pub unsafe extern "ptx-kernel" fn mem_mapa_shared(
     unsafe { *out = mapa::<{ StateSpace::SharedCta }, _>(*p, rank) }
 }
 
+// CHECK-LABEL: .entry mem_shared_offset_to_ptr(
+// CHECK-NOT: cvta.to.shared
+// CHECK-NOT: cvta.shared
+// CHECK: shl.b32 [[I:%r[0-9]+]],
+// CHECK: add.s32 [[Q:%r[0-9]+]], {{%r[0-9]+}}, [[I]];
+// CHECK: ld.shared.b32 {{%r[0-9]+}}, [[[Q]]];
+// CHECK: ld.shared.b32 {{%r[0-9]+}}, [[[Q]]+4];
+// CHECK: st.shared.b32 [[[Q]]], 0;
+// CHECK-NOT: cvta.to.shared
+// CHECK-NOT: cvta.shared
+// CHECK: ret;
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn mem_shared_offset_to_ptr(out: *mut u32, offset: u32, i: u32) {
+    unsafe {
+        let q = shared_offset_to_ptr::<u32>(offset).add(i as usize);
+        *out = *q + *q.add(1);
+        *q = 0;
+    }
+}
+
+// CHECK-LABEL: .entry mem_shared_offset_to_ptr_escape(
+// CHECK: ld.param.b32 [[OFFSET:%r[0-9]+]],
+// CHECK: cvt.u64.u32 [[OFFSET64:%rd[0-9]+]], [[OFFSET]];
+// CHECK: cvta.shared.u64 [[P:%rd[0-9]+]], [[OFFSET64]];
+// CHECK: st.global.b64 [{{%rd[0-9]+}}], [[P]];
+#[unsafe(no_mangle)]
+pub unsafe extern "ptx-kernel" fn mem_shared_offset_to_ptr_escape(out: *mut *mut u32, offset: u32) {
+    unsafe { *out = shared_offset_to_ptr(offset) }
+}
+
 // CHECK-LABEL: .entry mem_st_async(
 // CHECK: st.async.shared::cluster.mbarrier::complete_tx::bytes.b32 [{{%r[0-9]+}}], {{%r[0-9]+}}, [{{%r[0-9]+}}];
 // CHECK: st.async.shared::cluster.mbarrier::complete_tx::bytes.b64 [{{%r[0-9]+}}], {{%rd[0-9]+}}, [{{%r[0-9]+}}];

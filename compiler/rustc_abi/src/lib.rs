@@ -748,15 +748,19 @@ impl TargetDataLayout {
     /// Get the pointer size in a specific address space.
     #[inline]
     pub fn pointer_size_in(&self, c: AddressSpace) -> Size {
+        self.checked_pointer_size_in(c)
+            .unwrap_or_else(|| panic!("Use of unknown address space {c:?}"))
+    }
+
+    /// Get the pointer size in a specific address space, or `None` if the data layout doesn't
+    /// specify that address space.
+    #[inline]
+    pub fn checked_pointer_size_in(&self, c: AddressSpace) -> Option<Size> {
         if c == self.default_address_space {
-            return self.default_address_space_pointer_spec.pointer_size;
+            return Some(self.default_address_space_pointer_spec.pointer_size);
         }
 
-        if let Some(e) = self.address_space_info.iter().find(|(a, _)| a == &c) {
-            e.1.pointer_size
-        } else {
-            panic!("Use of unknown address space {c:?}");
-        }
+        self.address_space_info.iter().find(|(a, _)| a == &c).map(|e| e.1.pointer_size)
     }
 
     /// Get the pointer index in the default data address space.

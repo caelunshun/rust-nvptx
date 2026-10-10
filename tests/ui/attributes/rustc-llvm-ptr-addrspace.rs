@@ -17,19 +17,35 @@ unsafe extern "llvm-intrinsic" {
     #[rustc_llvm_ptr_addrspace(ret(3), args(1, 0))]
     fn ok_ret(p: *const *mut u8, align: i32) -> *mut u8;
 
+    #[link_name = "llvm.nvvm.mapa.shared.cluster"]
+    #[rustc_llvm_ptr_addrspace(args(3, 0), ret(7))]
+    fn ok_int(p: u32, rank: u32) -> u32;
+    #[link_name = "llvm.nvvm.ldu.global.i.i32.p1"]
+    #[rustc_llvm_ptr_addrspace(args(1, 0))]
+    fn ok_usize(p: usize, align: i32) -> i32;
+    #[link_name = "llvm.nvvm.tcgen05.dealloc.cg1"]
+    #[rustc_llvm_ptr_addrspace(args(6, 0))]
+    fn ok_tmem_int(tmem_addr: u32, ncols: u32);
+
+    #[link_name = "llvm.nvvm.mapa.shared.cluster"]
+    #[rustc_llvm_ptr_addrspace(args(3, 0), ret(7))]
+    //~^ ERROR address space 3 specified for 64-bit integer `u64`, but pointers in it are 32-bit
+    //~| ERROR address space 7 specified for 16-bit integer `i16`, but pointers in it are 32-bit
+    fn int_wrong_size(p: u64, rank: u32) -> i16;
+
     #[link_name = "llvm.nvvm.ldu.global.i.i32.p1"]
     #[rustc_llvm_ptr_addrspace(args(1))]
     //~^ ERROR expected 2 argument address spaces, found 1
     fn wrong_count(p: *const i32, align: i32) -> i32;
 
     #[link_name = "llvm.nvvm.ldu.global.i.i32.p1"]
-    #[rustc_llvm_ptr_addrspace(args(1, 1))]
-    //~^ ERROR address space specified for `i32`, which is not a thin raw pointer
-    fn not_pointer(p: *const i32, align: i32) -> i32;
+    #[rustc_llvm_ptr_addrspace(args(1, 0))]
+    //~^ ERROR address space specified for `f32`, which is not a thin raw pointer or an integer
+    fn not_pointer(p: f32, align: i32) -> i32;
 
     #[link_name = "llvm.nvvm.ldu.global.i.i32.p1"]
     #[rustc_llvm_ptr_addrspace(args(1, 0))]
-    //~^ ERROR address space specified for `*const [i32]`, which is not a thin raw pointer
+    //~^ ERROR address space specified for `*const [i32]`, which is not a thin raw pointer or an integer
     fn fat_pointer(p: *const [i32], align: i32) -> i32;
 
     #[link_name = "llvm.nvvm.ldu.global.i.i32.p6"]

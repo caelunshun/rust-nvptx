@@ -1011,6 +1011,13 @@ impl<'ll, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
 
         for (dest_ty, arg) in iter::zip(self.func_params_types(fn_ty), &mut llargs) {
             let src_ty = self.val_ty(arg);
+            // Integers given an address space by `#[rustc_llvm_ptr_addrspace]`
+            if self.type_kind(src_ty) == TypeKind::Integer
+                && self.type_kind(dest_ty) == TypeKind::Pointer
+            {
+                *arg = self.inttoptr(arg, dest_ty);
+                continue;
+            }
             assert!(
                 can_autocast(self, src_ty, dest_ty),
                 "Cannot match `{dest_ty:?}` (expected) with {src_ty:?} (found) in `{fn_ptr:?}"
@@ -1034,6 +1041,11 @@ impl<'ll, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'_, 'll, 'tcx> {
 
         let src_ty = self.val_ty(llret);
         let dest_ty = llreturn_ty;
+        if self.type_kind(src_ty) == TypeKind::Pointer
+            && self.type_kind(dest_ty) == TypeKind::Integer
+        {
+            return self.ptrtoint(llret, dest_ty);
+        }
         assert!(
             can_autocast(self, dest_ty, src_ty),
             "Cannot match `{src_ty:?}` (expected) with `{dest_ty:?}` (found) in `{fn_ptr:?}`"

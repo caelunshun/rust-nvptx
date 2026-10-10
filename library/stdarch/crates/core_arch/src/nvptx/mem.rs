@@ -67,6 +67,10 @@ unsafe extern "llvm-intrinsic" {
     #[link_name = "llvm.strip.invariant.group.p3"]
     #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(3), ret(3)))]
     fn llvm_strip_invariant_group_shared(p: *mut c_void) -> *mut c_void;
+    #[link_name = "llvm.strip.invariant.group.p3"]
+    #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(3), ret(3)))]
+    #[allow(clashing_extern_declarations)]
+    fn llvm_strip_invariant_group_shared_offset(offset: u32) -> *mut c_void;
     #[link_name = "llvm.strip.invariant.group.p4"]
     #[cfg_attr(target_arch = "nvptx64", rustc_llvm_ptr_addrspace(args(4), ret(4)))]
     fn llvm_strip_invariant_group_const(p: *mut c_void) -> *mut c_void;
@@ -162,6 +166,25 @@ pub unsafe fn cvta<const SPACE: StateSpace, T>(ptr: *mut T) -> *mut T {
         StateSpace::SharedCluster => llvm_strip_invariant_group_shared_cluster(ptr),
     }
     .cast()
+}
+
+/// Converts the shared memory address `offset` (a `.shared::cta` address, i.e. an offset into the
+/// executing CTA's shared memory) to a generic pointer to the same location (`cvta.shared`).
+///
+/// As with [`cvta`], the compiler knows that the returned pointer, and pointers derived from it,
+/// point into shared memory, so accesses through them can use `ld.shared`/`st.shared` and 32-bit
+/// address arithmetic. If the pointer is only used for such accesses, no conversion instruction is
+/// emitted at all.
+///
+/// Like [`ptr::with_exposed_provenance_mut`](crate::ptr::with_exposed_provenance_mut), the
+/// returned pointer picks up provenance that was previously exposed.
+///
+/// <https://docs.nvidia.com/cuda/parallel-thread-execution/#data-movement-and-conversion-instructions-cvta>
+#[inline]
+#[unstable(feature = "stdarch_nvptx", issue = "111199")]
+pub fn shared_offset_to_ptr<T>(offset: u32) -> *mut T {
+    // See `cvta`. `offset` is converted to a shared pointer with `inttoptr`.
+    unsafe { llvm_strip_invariant_group_shared_offset(offset).cast() }
 }
 
 /// Maps the address `ptr` of a shared memory location in the executing CTA to the generic address

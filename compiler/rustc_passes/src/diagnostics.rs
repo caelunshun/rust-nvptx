@@ -66,11 +66,24 @@ pub(crate) struct LlvmPtrAddrspaceArgCount {
 }
 
 #[derive(Diagnostic)]
-#[diag("address space specified for `{$ty}`, which is not a thin raw pointer")]
+#[diag("address space specified for `{$ty}`, which is not a thin raw pointer or an integer")]
 pub(crate) struct LlvmPtrAddrspaceNotPointer<'tcx> {
     #[primary_span]
     pub span: Span,
     pub ty: Ty<'tcx>,
+}
+
+#[derive(Diagnostic)]
+#[diag(
+    "address space {$addrspace} specified for {$size}-bit integer `{$ty}`, but pointers in it are {$ptr_size}-bit"
+)]
+pub(crate) struct LlvmPtrAddrspaceIntSize<'tcx> {
+    #[primary_span]
+    pub span: Span,
+    pub ty: Ty<'tcx>,
+    pub size: u64,
+    pub ptr_size: u64,
+    pub addrspace: u32,
 }
 
 #[derive(Diagnostic)]

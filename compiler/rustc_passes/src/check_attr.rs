@@ -785,7 +785,8 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
     }
 
     /// Checks that `#[rustc_llvm_ptr_addrspace]` is applied to an LLVM intrinsic and only
-    /// assigns address spaces reachable from generic pointers to thin raw pointers.
+    /// assigns address spaces reachable from generic pointers to thin raw pointers, and address
+    /// spaces to integers with the size of pointers in them.
     fn check_rustc_llvm_ptr_addrspace(
         &self,
         hir_id: HirId,
@@ -825,7 +826,22 @@ impl<'tcx> CheckAttrVisitor<'tcx> {
             if addrspace == 0 {
                 continue;
             }
-            if !matches!(ty.kind(), ty::RawPtr(pointee, _) if pointee.is_sized(self.tcx, typing_env))
+            if ty.is_integral() {
+                let dl = &self.tcx.data_layout;
+                let ptr_size = dl
+                    .checked_pointer_size_in(AddressSpace(addrspace))
+                    .unwrap_or(dl.pointer_size());
+                let size = ty.primitive_size(self.tcx);
+                if size != ptr_size {
+                    self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceIntSize {
+                        span,
+                        ty,
+                        size: size.bits(),
+                        ptr_size: ptr_size.bits(),
+                        addrspace,
+                    });
+                }
+            } else if !matches!(ty.kind(), ty::RawPtr(pointee, _) if pointee.is_sized(self.tcx, typing_env))
             {
                 self.dcx().emit_err(diagnostics::LlvmPtrAddrspaceNotPointer { span, ty });
             } else if !self.tcx.sess.target.addr_space_is_generic_castable(AddressSpace(addrspace))
